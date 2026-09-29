@@ -7,6 +7,7 @@ var CLASS_INFO={
   essentialQuestion:"How do relationships shape us?",essentialQuestionEs:"¿Cómo nos forman las relaciones?",
   seatingUrl:"https://docs.google.com/presentation/d/1VTIc-eAUqAbYAiEfaCqyJqNntfAWIvr_7w_qtuvAV8Q/edit?usp=sharing",
   planFolder:"https://drive.google.com/drive/folders/1riXzHCIt2zE8kgaTR1Neo77O0kEJO3p1",
+  videoUrl:"https://www.youtube.com/watch?v=oOTlHbxVAAM",
   sheetCsvUrl:"https://docs.google.com/spreadsheets/d/1l6UHAtO9B4MJKXH2S3NCJmM6BIMF1BrUJl0vAkjvaMc/edit"
 };
 
@@ -218,8 +219,9 @@ activityEs:'Escribe 3 oraciones sobre la persona de tu Para empezar. Usa una pal
 exitQuestion:"Open today's exit ticket in Google Classroom. Two word questions and How well do I understand today?",
 exitQuestionEs:'Abre el boleto de salida de hoy en Google Classroom. Dos preguntas de palabras y ¿qué tan bien entiendo lo de hoy?'},
 2:{lessonPlanUrl:'https://docs.google.com/document/d/1Twpg77DTq5d7t_B2g88Qludm2P4cVKCJsOR8k9JZ5Y0/edit',slidesUrl:'https://docs.google.com/presentation/d/1DYqsvUx1MX2hozAuPZv7LXJgwpLHMa9BlKucXqgf-Qg/edit',
-doNow:'Agree or disagree: One person can change your future. Write one sentence. I agree / disagree because ___.',
-doNowEs:'¿De acuerdo o no? Una persona puede cambiar tu futuro. Escribe una oración. Estoy de acuerdo / No estoy de acuerdo porque ___.',
+doNow:'Go to Google Classroom. Log in to Quill using Clever. Begin the Baseline Pre Diagnostic. You do not have to finish it today.',
+doNowEs:'Ve a Google Classroom. Inicia sesión en Quill con Clever. Empieza el Baseline Pre Diagnostic. No tienes que terminarlo hoy.',
+doNowWhere:'Chromebook',doNowWhereEs:'Chromebook',
 learningTarget:'I can find a line, a stanza, and a poetic device, and I can state my claim.',
 learningTargetEs:'Puedo encontrar un verso, una estrofa y un recurso poético, y puedo decir mi afirmación.',
 clo:'I will examine a poem by labeling its lines, stanzas, and speaker in the frame "The poem has ___ stanzas. The speaker is ___."',
@@ -271,7 +273,7 @@ var SHEET_COLUMNS=["day","date","topic","doNow","doNowEs","doNowWhere","doNowWhe
 "learningTarget","learningTargetEs","clo","cloEs","standards","activity","activityEs","materials","materialsEs",
 "criteriaMet","criteriaMetEs","criteriaApproaching","criteriaApproachingEs","criteriaNotYet","criteriaNotYetEs",
 "wordBank","wordBankEs","grammar","grammarEs","grammarAnswer","exitQuestion","exitQuestionEs",
-"slidesUrl","lessonPlanUrl","agenda"];
+"slidesUrl","lessonPlanUrl","videoUrl","agenda"];
 
 // Builds one day's content from everything above (no Sheet yet).
 function baseDay(n){
