@@ -41,6 +41,8 @@ function sheetUrl(){
   if(m&&m[1]!=="e")return "https://docs.google.com/spreadsheets/d/"+m[1]+"/gviz/tq?tqx=out:csv&headers=1";
   return u;
 }
+function videoUrl(d){return safeUrl((d&&d.videoUrl)||st.videoUrl||CLASS_INFO.videoUrl);}
+function ytId(u){var m=String(u||"").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);return m?m[1]:"";}
 function seatUrl(){return safeUrl(st.seatingUrl||CLASS_INFO.seatingUrl);}
 function dayNums(){
   var set={};U2.forEach(function(u){set[u.n]=1;});
@@ -337,7 +339,7 @@ function sideHTML(now){
       VOICE_LEVELS.map(function(v){return '<button data-act="voice:'+v.level+'" class="v-b v'+v.level+(v.level===st.voice?" on":"")+'">'+v.level+'</button>';}).join("")+
     '</div><div class="v-name">'+vl.level+' · '+esc(vl.label)+' <i>/ '+esc(vl.es)+'</i></div><div class="v-desc">'+esc(vl.desc)+' <i>'+esc(vl.descEs)+'</i></div></div>'+
     timerHTML(false)+
-    '<button class="s-gear" data-act="open:settings">⚙ Settings</button>';
+    '<div class="s-row"><button class="s-gear" data-act="open:video">▶ Video</button><button class="s-gear" data-act="open:settings">⚙ Settings</button></div>';
 }
 function mainHTML(now,d,n){
   var s=sectionInfo(now);
@@ -385,7 +387,7 @@ function loadRules(){
 var OV=null,vocabOpen=null,gramShow=false;
 var OVT={donow:["Do Now","Para empezar"],agenda:["Agenda","Agenda"],target:["Learning Target","Meta de aprendizaje"],clo:["Language Objective","Objetivo de lenguaje"],standards:["Standards","Estándares"],
   task:["Today's Task","Tarea de hoy"],criteria:["Success Criteria","Criterios de éxito"],vocab:["Vocabulary","Vocabulario"],grammar:["Grammar","Gramática"],exit:["Exit Ticket","Boleto de salida"],
-  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],rules:["Rules & Routines","Reglas y rutinas"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
+  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
 function seatEmbed(u){
   var m=u.match(/docs\.google\.com\/presentation\/d\/([^\/?#]+)/);
   return m?"https://docs.google.com/presentation/d/"+m[1]+"/embed?start=false&loop=false&delayms=600000":u;
@@ -397,6 +399,7 @@ function ovRight(id,d){
     return (s?'<a class="ov-link" href="'+esc(s)+'" target="_blank" rel="noopener">Slides</a>':"")+(p?'<a class="ov-link" href="'+esc(p)+'" target="_blank" rel="noopener">Lesson plan</a>':"");
   }
   if(id==="sounds")return '<button class="ov-link" data-act="sndstop">■ Stop</button>';
+  if(id==="video"&&videoUrl(d))return '<a class="ov-link" href="'+esc(videoUrl(d))+'" target="_blank" rel="noopener">Open in YouTube</a>';
   if(id==="seating"&&seatUrl())return '<a class="ov-link" href="'+esc(seatUrl())+'" target="_blank" rel="noopener">Open in new tab</a>';
   return "";
 }
@@ -421,6 +424,7 @@ function settingsBody(now){
     '<div class="set-row"><div class="set-l">Class section</div><div class="set-c">'+secs.map(function(o){return '<button class="'+(st.section===o.id?"on":"")+'" data-act="section:'+o.id+'">'+esc(o.l)+'</button>';}).join("")+'</div></div>'+
     '<div class="set-row"><div class="set-l">Timer sound</div><div class="set-c">'+SOUNDS.map(function(s){return '<button class="'+(st.sound===s[0]?"on":"")+'" data-act="sound:'+s[0]+'">'+s[1]+'</button>';}).join("")+'<button data-act="soundtest">▶ Test</button></div></div>'+
     '<div class="set-row"><div class="set-l">Lesson Sheet link</div><div class="set-c colm"><input id="sheetIn" value="'+esc(st.sheetUrl)+'" placeholder="Paste the Google Sheet link"><div class="set-c"><button data-act="sheetsave">Save</button><button data-act="sheetreload">Reload now</button><span class="set-note" id="sheetMsg">'+esc(sheetMsg)+'</span></div><div class="set-help">The screen checks the Sheet every 5 minutes. Blank cells use the built-in lesson.</div></div></div>'+
+    '<div class="set-row"><div class="set-l">Video link</div><div class="set-c colm"><input id="vidIn" value="'+esc(st.videoUrl||CLASS_INFO.videoUrl)+'" placeholder="Paste a YouTube link"><div class="set-c"><button data-act="vidsave">Save</button><button data-act="open:video">▶ Play</button><span class="set-note">A videoUrl in the Sheet for a day plays instead on that day.</span></div></div></div>'+
     '<div class="set-row"><div class="set-l">Seating chart link</div><div class="set-c colm"><input id="seatIn" value="'+esc(st.seatingUrl||CLASS_INFO.seatingUrl)+'"><div class="set-c"><button data-act="seatsave">Save</button></div></div></div>'+
     '<div class="set-row"><div class="set-l">Screen</div><div class="set-c"><button data-act="fullscreen">Full screen browser</button></div></div>'+
     '<div class="set-row"><div class="set-l">Screen size</div><div class="set-c"><button data-act="zoom:out" aria-label="Smaller">−</button><span class="set-v">'+Math.round((st.zoom||1)*100)+'%</span><button data-act="zoom:in" aria-label="Bigger">+</button><button data-act="zoom:auto">Fit (100%)</button><span class="set-note">Screen reads as '+viewSize().w+' × '+viewSize().h+'</span></div></div>'+
@@ -440,6 +444,7 @@ function ovBody(id,d,now){
     case "grammar":return '<div class="fit" data-max="72">'+bi(d.grammar,d.grammarEs)+(gramShow&&d.grammarAnswer?'<div class="gram-ans"><div class="en">'+esc(d.grammarAnswer)+'</div></div>':"")+'</div>'+
       (d.grammarAnswer?'<button class="btn" data-act="gramshow">'+(gramShow?"Hide answer":"Show answer")+' <i>/ '+(gramShow?"Ocultar respuesta":"Mostrar respuesta")+'</i></button>':"");
     case "exit":return '<div class="fit" data-max="72">'+bi(d.exitQuestion,d.exitQuestionEs)+'</div><div class="submit">Submit in Google Classroom <i>/ Entrégalo en Google Classroom</i></div>';
+    case "video":var vu=videoUrl(d),id=ytId(vu);return id?'<iframe class="seat-frame" src="https://www.youtube-nocookie.com/embed/'+id+'?rel=0&modestbranding=1&playsinline=1" title="Video" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>':(vu?'<div class="vd-empty">This link is not a YouTube video. Use Open in new tab.</div>':'<div class="vd-empty">Add a YouTube link in Settings.</div>');
     case "seating":var u=seatUrl();return u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>';
     case "timer":return timerHTML(true);
     case "sounds":return '<div class="sb">'+BOARD.map(function(b){return '<button class="sb-b" data-act="snd:'+b[0]+'"><span class="sb-ic">'+b[3]+'</span><span class="sb-en">'+esc(b[1])+'</span><i>'+esc(b[2])+'</i></button>';}).join("")+'</div>';
@@ -495,6 +500,7 @@ function act(a,el,e){
     case "zoom":st.zoom=p[1]==="auto"?1:Math.max(0.5,Math.min(1.5,Math.round(((st.zoom||1)+(p[1]==="in"?0.05:-0.05))*100)/100));save();scaleBoard(true);renderOv();return;
     case "sheetsave":st.sheetUrl=$("#sheetIn").value.trim();save();loadSheet();return;
     case "sheetreload":loadSheet();loadRules();return;
+    case "vidsave":st.videoUrl=$("#vidIn").value.trim();save();renderOv();return;
     case "seatsave":st.seatingUrl=$("#seatIn").value.trim();save();renderOv();return;
     case "fullscreen":var r=document.documentElement;(r.requestFullscreen||r.webkitRequestFullscreen||function(){}).call(r);return;
     case "vocab":vocabOpen=decodeURIComponent(a.slice(6));renderOv();return;
