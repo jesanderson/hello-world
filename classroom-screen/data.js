@@ -2,7 +2,7 @@
 // Anything here can be overridden per day from the published Google Sheet.
 
 var CLASS_INFO={
-  teacher:"Ms. Anderson",room:"Room C131",subject:"6th Grade Literacy",
+  teacher:"Anderson",room:"Room C131",subject:"6th Grade Literacy",
   unit:"Unit 2: You and Me",unitEs:"Unidad 2: Tú y yo",
   essentialQuestion:"How do relationships shape us?",essentialQuestionEs:"¿Cómo nos forman las relaciones?",
   seatingUrl:"https://docs.google.com/presentation/d/1VTIc-eAUqAbYAiEfaCqyJqNntfAWIvr_7w_qtuvAV8Q/edit?usp=sharing",
@@ -31,6 +31,17 @@ var VOICE_LEVELS=[
 
 var CARES=["Cooperation","Acceptance","Respect","Eagerness to Learn","Safety"];
 var CARES_ES={"Cooperation":"Cooperación","Acceptance":"Aceptación","Respect":"Respeto","Eagerness to Learn":"Ganas de aprender","Safety":"Seguridad"};
+
+// Rules and Routines ticker. The Sheet's "Rules" tab (columns rule, ruleEs) replaces these.
+var RULES_DEFAULT=[
+  {rule:"Enter quietly and start the Do Now.",ruleEs:"Entra en silencio y empieza el Para empezar."},
+  {rule:"Bring your notebook, pencil, and Chromebook every day.",ruleEs:"Trae tu cuaderno, lápiz y Chromebook todos los días."},
+  {rule:"Raise your hand to speak or to ask for help.",ruleEs:"Levanta la mano para hablar o pedir ayuda."},
+  {rule:"Follow the voice level on the board.",ruleEs:"Sigue el nivel de voz del pizarrón."},
+  {rule:"Chromebooks are for schoolwork only.",ruleEs:"El Chromebook es solo para trabajo escolar."},
+  {rule:"Show CARES: Cooperation, Acceptance, Respect, Eagerness to Learn, Safety.",ruleEs:"Muestra CARES: Cooperación, Aceptación, Respeto, Ganas de aprender, Seguridad."},
+  {rule:"Clean your space and push in your chair before you leave.",ruleEs:"Limpia tu lugar y mete tu silla antes de salir."}
+];
 
 // Used on any day where the Sheet or the lesson data leaves a field blank.
 var DAY_DEFAULTS={
