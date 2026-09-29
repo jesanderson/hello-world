@@ -7,7 +7,7 @@ var CLASS_INFO={
   essentialQuestion:"How do relationships shape us?",essentialQuestionEs:"¿Cómo nos forman las relaciones?",
   seatingUrl:"https://docs.google.com/presentation/d/1VTIc-eAUqAbYAiEfaCqyJqNntfAWIvr_7w_qtuvAV8Q/edit?usp=sharing",
   planFolder:"https://drive.google.com/drive/folders/1riXzHCIt2zE8kgaTR1Neo77O0kEJO3p1",
-  sheetCsvUrl:""
+  sheetCsvUrl:"https://docs.google.com/spreadsheets/d/1l6UHAtO9B4MJKXH2S3NCJmM6BIMF1BrUJl0vAkjvaMc/edit"
 };
 
 var SECTIONS=[

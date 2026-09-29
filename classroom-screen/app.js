@@ -35,7 +35,11 @@ var sheetMsg="";
 function sheetRows(){return (st.sheetCache&&st.sheetCache.rows)||{};}
 function sheetUrl(){
   var p=new URLSearchParams(location.search).get("sheet");
-  return safeUrl(st.sheetUrl||p||CLASS_INFO.sheetCsvUrl);
+  var u=safeUrl(st.sheetUrl||p||CLASS_INFO.sheetCsvUrl);
+  // A regular Sheet link (shared "anyone with the link can view") is read through Google's CSV endpoint.
+  var m=u.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);
+  if(m&&m[1]!=="e")return "https://docs.google.com/spreadsheets/d/"+m[1]+"/gviz/tq?tqx=out:csv&headers=1";
+  return u;
 }
 function seatUrl(){return safeUrl(st.seatingUrl||CLASS_INFO.seatingUrl);}
 function dayNums(){
@@ -120,7 +124,7 @@ function loadSheet(){
     setSheetMsg("Loaded "+Object.keys(out).length+" days at "+new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+".");
     render();if(OV&&OV!=="settings")renderOv();
   }).catch(function(e){
-    setSheetMsg("Could not load the Sheet ("+e.message+"). Using the last saved copy.");
+    setSheetMsg("Could not load the Sheet ("+e.message+"). Check that it is shared as Anyone with the link can view. Using the last saved copy for now.");
   });
 }
 
@@ -343,7 +347,7 @@ function settingsBody(now){
     '<div class="set-row"><div class="set-l">Lesson day</div><div class="set-c"><button data-act="day:prev" aria-label="Previous day">‹</button><span class="set-v">Day '+n+' of '+nums.length+(d.date?" · "+fmtDt(d.date):"")+'</span><button data-act="day:next" aria-label="Next day">›</button><button class="'+(st.day==="auto"?"on":"")+'" data-act="day:auto">Today (auto)</button></div></div>'+
     '<div class="set-row"><div class="set-l">Class section</div><div class="set-c">'+secs.map(function(o){return '<button class="'+(st.section===o.id?"on":"")+'" data-act="section:'+o.id+'">'+esc(o.l)+'</button>';}).join("")+'</div></div>'+
     '<div class="set-row"><div class="set-l">Timer sound</div><div class="set-c">'+SOUNDS.map(function(s){return '<button class="'+(st.sound===s[0]?"on":"")+'" data-act="sound:'+s[0]+'">'+s[1]+'</button>';}).join("")+'<button data-act="soundtest">▶ Test</button></div></div>'+
-    '<div class="set-row"><div class="set-l">Lesson Sheet link</div><div class="set-c colm"><input id="sheetIn" value="'+esc(st.sheetUrl)+'" placeholder="Paste the Google Sheet link that ends in output=csv"><div class="set-c"><button data-act="sheetsave">Save</button><button data-act="sheetreload">Reload now</button><span class="set-note" id="sheetMsg">'+esc(sheetMsg)+'</span></div><div class="set-help">The screen checks the Sheet every 5 minutes. Blank cells use the built-in lesson.</div></div></div>'+
+    '<div class="set-row"><div class="set-l">Lesson Sheet link</div><div class="set-c colm"><input id="sheetIn" value="'+esc(st.sheetUrl)+'" placeholder="Paste the Google Sheet link"><div class="set-c"><button data-act="sheetsave">Save</button><button data-act="sheetreload">Reload now</button><span class="set-note" id="sheetMsg">'+esc(sheetMsg)+'</span></div><div class="set-help">The screen checks the Sheet every 5 minutes. Blank cells use the built-in lesson.</div></div></div>'+
     '<div class="set-row"><div class="set-l">Seating chart link</div><div class="set-c colm"><input id="seatIn" value="'+esc(st.seatingUrl||CLASS_INFO.seatingUrl)+'"><div class="set-c"><button data-act="seatsave">Save</button></div></div></div>'+
     '<div class="set-row"><div class="set-l">Screen</div><div class="set-c"><button data-act="fullscreen">Full screen browser</button></div></div>'+
   '</div>';
