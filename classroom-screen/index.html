@@ -28,7 +28,35 @@ i{font-style:italic}
 .s-clock{text-align:center}
 .s-time{font-size:62px;font-weight:800;line-height:1.05}
 .s-date{font-size:22px;color:var(--tan)}
-.s-sec{font-size:20px;font-weight:700;color:var(--gold);margin-top:4px}
+.s-sec{font-size:21px;font-weight:700;color:var(--gold);margin-top:4px}
+.s-now{font-size:21px;font-weight:800;color:#fff;background:rgba(215,166,41,.28);border-radius:10px;padding:4px 8px;margin-top:6px}
+.ag-left{font-size:.62em;font-weight:800;color:var(--ink);background:#fff;border-radius:99px;padding:.1em .6em;justify-self:end;white-space:nowrap}
+.ag{grid-template-columns:4.4em auto 1fr auto!important}
+.qs{display:flex;gap:8px;margin-top:10px}
+.qs-b{flex:1;height:64px;border-radius:12px;background:var(--cream);border:3px solid var(--stone);font-size:34px;text-align:center}
+.qs-b:active{background:var(--gold)}
+#chyron{background:var(--ink);color:#fff;border-radius:16px 16px 0 0;display:flex;align-items:center;overflow:hidden;cursor:pointer;min-width:0}
+.ch-l{background:var(--gold);color:var(--ink);font-size:22px;font-weight:800;padding:0 18px;height:100%;display:flex;flex-direction:column;justify-content:center;white-space:nowrap;line-height:1.1}
+.ch-l i{font-size:16px;font-weight:500}
+.ch-win{flex:1;overflow:hidden;min-width:0}
+.ch-track{display:inline-flex;white-space:nowrap;animation:tick linear infinite}
+.ch-i{font-size:26px;font-weight:600;padding:0 48px 0 0}
+.ch-i b{color:var(--gold)}.ch-i i{color:var(--tan);font-weight:500}
+.ch-x{padding:0 16px;color:var(--tan)}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.sb{display:grid;grid-template-columns:repeat(5,1fr);gap:22px;flex:1;min-height:0}
+.sb-b{background:var(--cream);border:4px solid var(--stone);border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.sb-b:active{background:var(--gold);border-color:var(--gold)}
+.sb-ic{font-size:96px;line-height:1}
+.sb-en{font-size:34px;font-weight:800;color:var(--maroon)}
+.sb-b i{font-size:26px;color:var(--slate)}
+.rv{flex:1;overflow:hidden;min-height:0}
+.rv-track{list-style:none;margin:0;padding:0;animation:roll linear infinite}
+.rv-track li{font-size:52px;line-height:1.25;padding:18px 0;border-bottom:2px solid var(--stone)}
+.rv-track li b{color:var(--maroon)}
+.rv-track .es{font-size:38px}
+@keyframes roll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){.ch-track,.rv-track{animation-duration:0s!important}}
 .s-cares{text-align:left}
 .s-cv{font-size:30px;font-weight:800;line-height:1.15}
 .s-ces{font-size:20px;font-style:italic;color:var(--tan)}
@@ -64,7 +92,8 @@ i{font-style:italic}
 @keyframes pulse{50%{opacity:.35}}
 
 /* Main */
-#main{padding:16px;display:grid;grid-template-rows:1fr 176px 108px;gap:14px;min-height:0;min-width:0}
+#main{padding:14px 16px 0;display:grid;grid-template-rows:1fr 62px;gap:12px;min-height:0;min-width:0}
+#mainBody{display:grid;grid-template-rows:1fr 168px 100px;gap:12px;min-height:0;min-width:0}
 .top{display:grid;grid-template-columns:1.05fr 1fr;gap:14px;min-height:0}
 .col{display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0}
 .card{background:#fff;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;min-height:0;box-shadow:0 3px 12px rgba(32,37,43,.08);cursor:pointer}
@@ -95,12 +124,12 @@ i{font-style:italic}
 .std-t{line-height:1.3}
 
 /* Tiles */
-.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;min-height:0}
+.tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;min-height:0}
 .tile{background:#fff;border-radius:18px;border-top:8px solid var(--gold);padding:12px 16px;display:flex;flex-direction:column;min-width:0;overflow:hidden;box-shadow:0 3px 12px rgba(32,37,43,.08)}
 .tile-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.tile-t{font-size:25px;font-weight:800;color:var(--maroon);line-height:1.1}
+.tile-t{font-size:23px;font-weight:800;color:var(--maroon);line-height:1.1}
 .tile-es{font-size:18px;font-style:italic;color:var(--slate)}
-.tile-p{font-size:19px;line-height:1.3;margin-top:8px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile-p{font-size:19px;line-height:1.3;margin-top:6px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tile .h-x{color:var(--slate)}
 
 /* Week */
@@ -190,7 +219,7 @@ i{font-style:italic}
 <body>
 <div id="board" aria-label="Classroom screen">
   <aside id="side"></aside>
-  <main id="main"></main>
+  <main id="main"><div id="mainBody"></div><div id="chyron" data-act="open:rules" role="button" aria-label="Rules and Routines"></div></main>
   <div id="overlay"></div>
 </div>
 <script src="data.js"></script>
