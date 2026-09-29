@@ -11,6 +11,10 @@ var CLASS_INFO={
   sheetCsvUrl:"https://docs.google.com/spreadsheets/d/1l6UHAtO9B4MJKXH2S3NCJmM6BIMF1BrUJl0vAkjvaMc/edit"
 };
 
+// Recorded sounds that replace the built-in ones, by soundboard id.
+// Files go in classroom-screen/sounds/ (public domain or free-license only).
+var SOUND_FILES={};
+
 var SECTIONS=[
   {id:"101",period:"Period 1",start:"8:20",end:"9:18"},
   {id:"203",period:"Period 3",start:"10:55",end:"11:53"},
