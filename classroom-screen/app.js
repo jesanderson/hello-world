@@ -367,7 +367,7 @@ var MAX={donow:42,agenda:34,target:36,clo:32,standards:26};
 function card(id,t,te,body,cls,right){
   return '<section class="card '+cls+'" data-act="open:'+id+'"><header class="card-h"><span class="h-t">'+t+'</span><span class="h-es">'+te+'</span><span class="h-sp"></span>'+(right||"")+'<span class="h-x" aria-hidden="true">⤢</span></header><div class="card-b fit" data-max="'+MAX[id]+'">'+body+'</div></section>';
 }
-var TILES=[["task","Today's Task","Tarea de hoy"],["criteria","Success Criteria","Criterios de éxito"],["vocab","Vocabulary","Vocabulario"],["grammar","Grammar","Gramática"],["exit","Exit Ticket","Boleto de salida"],["seating","Seating Chart","Mapa de asientos"]];
+var TILES=[["task","Today's Task","Tarea de hoy"],["annotate","Annotation Key","Clave de anotación"],["criteria","Success Criteria","Criterios de éxito"],["vocab","Vocabulary","Vocabulario"],["grammar","Grammar","Gramática"],["exit","Exit Ticket","Boleto de salida"],["seating","Seating Chart","Mapa de asientos"]];
 function tilePreview(id,d){
   var p="";
   if(id==="task")p=d.activity;
@@ -375,6 +375,7 @@ function tilePreview(id,d){
   else if(id==="vocab")p=words(d).map(function(w){return w.w;}).join(", ");
   else if(id==="grammar")p=d.grammar;
   else if(id==="exit")p=d.exitQuestion;
+  else if(id==="annotate")return '<span class="an-row">'+annList().map(function(a){return esc(a.symbol);}).join(" ")+'</span>';
   else if(id==="seating")return 'Tap to open <i>/ Toca para abrir</i>';
   return p?esc(p):soon();
 }
@@ -445,6 +446,19 @@ function renderChyron(){
   $("#chyron").innerHTML='<div class="ch-l">Rules &amp; Routines<i>Reglas y rutinas</i></div><div class="ch-win"><div class="ch-track" style="animation-duration:'+Math.max(30,Math.round(chars*0.22))+'s">'+items+items+'</div></div><span class="h-x ch-x" aria-hidden="true">⤢</span>';
 }
 function rulesUrl(){var u=sheetUrl();return /\/gviz\/tq/.test(u)?u+"&sheet=Rules":"";}
+function annList(){return (st.annCache&&st.annCache.length)?st.annCache:ANNOTATIONS_DEFAULT;}
+function loadAnnotations(){
+  var u=sheetUrl();if(!/\/gviz\/tq/.test(u))return;
+  fetch(u+"&sheet=Annotations",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
+    if(/^\s*</.test(t))throw 0;
+    var rows=parseCSV(t),head=(rows.shift()||[]).map(function(h){return h.trim().toLowerCase();});
+    var ix=function(k){return head.indexOf(k);},si=ix("symbol");if(si<0)throw 0;
+    var get=function(r,k){var i=ix(k);return i>-1?String(r[i]||"").trim():"";};
+    var out=rows.map(function(r){return {symbol:get(r,"symbol"),label:get(r,"label"),labelEs:get(r,"labeles"),meaning:get(r,"meaning"),meaningEs:get(r,"meaninges")};}).filter(function(x){return x.symbol;});
+    if(!out.length)throw 0;
+    st.annCache=out;save();render();if(OV==="annotate")renderOv();
+  }).catch(function(){});
+}
 function loadRules(){
   var u=rulesUrl();if(!u)return;
   fetch(u,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
@@ -461,7 +475,7 @@ function loadRules(){
 var OV=null,vocabOpen=null,gramShow=false;
 var OVT={donow:["Do Now","Para empezar"],agenda:["Agenda","Agenda"],target:["Learning Target","Meta de aprendizaje"],clo:["Language Objective","Objetivo de lenguaje"],standards:["Standards","Estándares"],
   task:["Today's Task","Tarea de hoy"],criteria:["Success Criteria","Criterios de éxito"],vocab:["Vocabulary","Vocabulario"],grammar:["Grammar","Gramática"],exit:["Exit Ticket","Boleto de salida"],
-  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
+  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
 function seatEmbed(u){
   var m=u.match(/docs\.google\.com\/presentation\/d\/([^\/?#]+)/);
   return m?"https://docs.google.com/presentation/d/"+m[1]+"/embed?start=false&loop=false&delayms=600000":u;
@@ -522,6 +536,7 @@ function ovBody(id,d,now){
     case "seating":var u=seatUrl();return u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>';
     case "timer":return timerHTML(true);
     case "sounds":return '<div class="sb">'+BOARD.map(function(b){return '<button class="sb-b" data-act="snd:'+b[0]+'"><span class="sb-ic">'+b[3]+'</span><span class="sb-en">'+esc(b[1])+'</span><i>'+esc(b[2])+'</i></button>';}).join("")+'</div>';
+    case "annotate":return '<div class="an">'+annList().map(function(a){return '<div class="an-c"><div class="an-s">'+esc(a.symbol)+'</div><div class="an-t"><div class="an-l">'+esc(a.label)+(a.labelEs?' <i>/ '+esc(a.labelEs)+'</i>':"")+'</div><div class="an-m">'+esc(a.meaning)+'</div>'+(a.meaningEs?'<div class="es">'+esc(a.meaningEs)+'</div>':"")+'</div></div>';}).join("")+'</div>';
     case "rules":var r=rulesList(),li=r.map(function(x,i){return '<li><b>'+(i+1)+'.</b> <span class="en">'+esc(x.rule)+'</span>'+(x.ruleEs?'<div class="es">'+esc(x.ruleEs)+'</div>':"")+'</li>';}).join("");
       return '<div class="rv"><ul class="rv-track" style="animation-duration:'+Math.max(20,r.length*5)+'s">'+li+li+'</ul></div>';
     case "settings":return settingsBody(now);
@@ -573,7 +588,7 @@ function act(a,el,e){
     case "sndstop":stopSounds();return;
     case "zoom":st.zoom=p[1]==="auto"?1:Math.max(0.5,Math.min(1.5,Math.round(((st.zoom||1)+(p[1]==="in"?0.05:-0.05))*100)/100));save();scaleBoard(true);renderOv();return;
     case "sheetsave":st.sheetUrl=$("#sheetIn").value.trim();save();loadSheet();return;
-    case "sheetreload":loadSheet();loadRules();return;
+    case "sheetreload":loadSheet();loadRules();loadAnnotations();return;
     case "vidsave":st.videoUrl=$("#vidIn").value.trim();save();renderOv();return;
     case "seatsave":st.seatingUrl=$("#seatIn").value.trim();save();renderOv();return;
     case "fullscreen":var r=document.documentElement;(r.requestFullscreen||r.webkitRequestFullscreen||function(){}).call(r);return;
@@ -608,8 +623,8 @@ if(window.visualViewport)visualViewport.addEventListener("resize",function(){sca
 setInterval(scaleBoard,2000);
 
 // ---------- start ----------
-scaleBoard(true);render();renderChyron();loadSheet();loadRules();
-setInterval(function(){loadSheet();loadRules();},5*60*1000);
+scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();
+setInterval(function(){loadSheet();loadRules();loadAnnotations();},5*60*1000);
 var lastMin=new Date().getMinutes();
 setInterval(function(){
   tickTimers();

@@ -15,6 +15,18 @@ var CLASS_INFO={
 // Files go in classroom-screen/sounds/ (public domain or free-license only).
 var SOUND_FILES={};
 
+// Annotation Key. The Sheet's "Annotations" tab (columns symbol, label, labelEs, meaning, meaningEs) replaces these.
+var ANNOTATIONS_DEFAULT=[
+  {symbol:"?",label:"Question",labelEs:"Pregunta",meaning:"I have a question about this.",meaningEs:"Tengo una pregunta sobre esto."},
+  {symbol:"!",label:"Surprise",labelEs:"Sorpresa",meaning:"This surprised me.",meaningEs:"Esto me sorprendió."},
+  {symbol:"★",label:"Important",labelEs:"Importante",meaning:"This is a key idea.",meaningEs:"Esta es una idea clave."},
+  {symbol:"◯",label:"New word",labelEs:"Palabra nueva",meaning:"Circle a word I don't know.",meaningEs:"Encierra una palabra que no conozco."},
+  {symbol:"___",label:"Evidence",labelEs:"Evidencia",meaning:"Underline proof for an idea.",meaningEs:"Subraya la prueba de una idea."},
+  {symbol:"♥",label:"Connection",labelEs:"Conexión",meaning:"This reminds me of something.",meaningEs:"Esto me recuerda algo."},
+  {symbol:"→",label:"Prediction",labelEs:"Predicción",meaning:"I think this will happen next.",meaningEs:"Creo que esto va a pasar después."},
+  {symbol:"☺",label:"Feeling",labelEs:"Sentimiento",meaning:"How a character feels.",meaningEs:"Cómo se siente un personaje."}
+];
+
 var SECTIONS=[
   {id:"101",period:"Period 1",start:"8:20",end:"9:18"},
   {id:"203",period:"Period 3",start:"10:55",end:"11:53"},
