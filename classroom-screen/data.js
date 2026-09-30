@@ -60,20 +60,34 @@ var ROUTINE_BANK=[
 ];
 // Options for "Materials to Have Ready". Today's materials from the Sheet stay the daily default.
 var MATERIAL_BANK=[
-  {text:"Notebook or any paper",textEs:"Cuaderno o cualquier papel"},
+  {text:"Notebook",textEs:"Cuaderno"},
+  {text:"Paper",textEs:"Papel"},
   {text:"Pencil",textEs:"Lápiz"},
-  {text:"Chromebook for Google Classroom",textEs:"Chromebook para Google Classroom"},
-  {text:"Charged Chromebook",textEs:"Chromebook con carga"},
-  {text:"Headphones or earbuds",textEs:"Audífonos"},
-  {text:"Independent reading book",textEs:"Libro de lectura independiente"},
-  {text:"Walk Two Moons packet",textEs:"Paquete de Walk Two Moons"},
-  {text:"Highlighter",textEs:"Marcador resaltador"},
-  {text:"Sticky notes",textEs:"Notas adhesivas"},
+  {text:"Pen",textEs:"Pluma"},
+  {text:"Chromebook",textEs:"Chromebook"},
+  {text:"Charger",textEs:"Cargador"},
+  {text:"Headphones",textEs:"Audífonos"},
+  {text:"Book",textEs:"Libro"},
+  {text:"Handout",textEs:"Hoja de trabajo"},
   {text:"Folder",textEs:"Carpeta"},
+  {text:"Highlighter",textEs:"Resaltador"},
+  {text:"Markers",textEs:"Marcadores"},
   {text:"Colored pencils",textEs:"Lápices de colores"},
-  {text:"Glue stick",textEs:"Pegamento en barra"},
-  {text:"Scissors",textEs:"Tijeras"},
-  {text:"Pen",textEs:"Pluma"}
+  {text:"Sticky notes",textEs:"Notas adhesivas"},
+  {text:"Glue stick",textEs:"Pegamento"},
+  {text:"Scissors",textEs:"Tijeras"}
+];
+
+// Class jobs. Edit, add, and shuffle them from the Seating Chart's Class Jobs tab (saved on the device).
+var JOBS_DEFAULT=[
+  {id:"door",icon:"🚪",name:"Door Manager",nameEs:"Encargado de la puerta",desc:"Sits by the door and opens it when someone knocks.",descEs:"Se sienta junto a la puerta y la abre cuando alguien toca.",slots:1,door:true},
+  {id:"lead",icon:"🚶",name:"Line Leader",nameEs:"Líder de la fila",desc:"Makes sure nobody crowds the door or goes into the hallway.",descEs:"Se asegura de que nadie se amontone en la puerta ni salga al pasillo.",slots:1},
+  {id:"leadast",icon:"👣",name:"Line Leader Assistant",nameEs:"Asistente del líder de la fila",desc:"Helps everyone form a single-file line.",descEs:"Ayuda a todos a formar una fila de uno en uno.",slots:1},
+  {id:"linestaff",icon:"🤫",name:"Line Staff",nameEs:"Equipo de la fila",desc:"Helps keep the line quiet so we can leave on time.",descEs:"Ayuda a mantener la fila en silencio para salir a tiempo.",slots:1},
+  {id:"ta",icon:"🍎",name:"Teacher Assistant",nameEs:"Asistente docente",desc:"Helps pass out and collect materials.",descEs:"Ayuda a repartir y recoger materiales.",slots:2},
+  {id:"lib",icon:"📚",name:"Librarian",nameEs:"Encargado de la biblioteca",desc:"Keeps the class library neat and books put away.",descEs:"Mantiene ordenada la biblioteca del salón y guarda los libros.",slots:1},
+  {id:"cust",icon:"🧹",name:"Custodians",nameEs:"Conserjes",desc:"Make sure trash is picked up off the floor.",descEs:"Se aseguran de recoger la basura del piso.",slots:2},
+  {id:"design",icon:"🎨",name:"Interior Design Team",nameEs:"Equipo de diseño",desc:"Make sure the room looks nice.",descEs:"Se aseguran de que el salón se vea bonito.",slots:2}
 ];
 
 // Picture for each material, matched by keyword (first match wins).
@@ -129,8 +143,8 @@ var DAY_DEFAULTS={
   doNow:"",doNowEs:"",doNowWhere:"notebook or any paper",doNowWhereEs:"cuaderno o cualquier papel",doNowMins:5,
   learningTarget:"",learningTargetEs:"",clo:"",cloEs:"",
   activity:"",activityEs:"",
-  materials:"Notebook or any paper, Pencil, Chromebook for Google Classroom",
-  materialsEs:"Cuaderno o cualquier papel, Lápiz, Chromebook para Google Classroom",
+  materials:"Notebook, Pencil, Chromebook",
+  materialsEs:"Cuaderno, Lápiz, Chromebook",
   criteriaMet:"What a finished, correct answer looks like",criteriaMetEs:"Cómo se ve una respuesta completa y correcta",
   criteriaApproaching:"Part of the task done correctly",criteriaApproachingEs:"Una parte de la tarea hecha correctamente",
   criteriaNotYet:"Not started, one piece only, or copied",criteriaNotYetEs:"Sin empezar, solo una parte, o copiado",

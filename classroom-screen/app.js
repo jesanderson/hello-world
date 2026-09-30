@@ -147,7 +147,7 @@ function note(out,t,f,dur,vol,parts,type){
 }
 var SOUNDS=[["calypso","Calypso"],["ocean","Ocean waves"],["marimba","Marimba"],["off","No sound"]];
 // Soundboard: id, English, Spanish, icon. Attention getters first.
-var BOARD=[["eagle","Eagle","Águila","🦅"],["chime","Attention chime","Campanitas","🔔"],["bowl","Quiet bowl","Cuenco de calma","🧘"],
+var BOARD=[["eagle","Hawk overhead","Halcón","🦅"],["chime","Attention chime","Campanitas","🔔"],["bowl","Quiet bowl","Cuenco de calma","🧘"],
   ["countdown","3, 2, 1","3, 2, 1","⏱️"],["doorbell","Ding-dong","Timbre","🛎️"],["airhorn","Air horn","Bocina","📯"],["drumroll","Drumroll","Redoble","🥁"],
   ["correct","Correct!","¡Correcto!","✅"],["wrong","Try again","Intenta otra vez","❌"],["levelup","Level up!","¡Subiste de nivel!","⭐"],
   ["tada","Ta-da!","¡Tarán!","🎉"],["applause","Applause","Aplausos","👏"],["sadtrombone","Sad trombone","Trombón triste","🎺"],["dundun","Dun dun DUN","Momento dramático","😮"],
@@ -237,15 +237,15 @@ function playSound(name){
   case "marimba":
     [0,1.1].forEach(function(off){[72,76,79,84].forEach(function(m,i){note(out,t0+off+i*0.15,mf(m),0.6,.4,[[1,1],[4,.12,.3]]);});});break;
   case "eagle":
-    // Deep, majestic call over a canyon: wind, a wing sweep, a long low scream, and echoes
-    var rv=reverb(out,4.5,2.2),wet=AC.createGain();wet.gain.value=0.55;wet.connect(rv);
-    var dl=AC.createDelay(1),fb=AC.createGain(),dlp=AC.createBiquadFilter();dl.delayTime.value=0.42;fb.gain.value=0.38;dlp.type="lowpass";dlp.frequency.value=2200;
-    wet.connect(dl);dl.connect(dlp);dlp.connect(fb);fb.connect(dl);dlp.connect(out);
-    noise(out,t0,6,"lowpass",450,function(p,t){p.linearRampToValueAtTime(0.25,t+1.5);p.linearRampToValueAtTime(0.15,t+4);p.linearRampToValueAtTime(0.0001,t+6);});
-    var ws=noise(out,t0,0.9,"bandpass",300,function(p,t){p.exponentialRampToValueAtTime(0.5,t+0.35);p.exponentialRampToValueAtTime(0.0001,t+0.9);},1.2);
-    ws.frequency.setValueAtTime(250,t0);ws.frequency.exponentialRampToValueAtTime(1400,t0+0.45);ws.frequency.exponentialRampToValueAtTime(400,t0+0.9);
-    hawk(out,wet,t0+0.6,2.5,2100,900,.45,true);
-    hawk(out,wet,t0+3.4,1.7,1900,950,.3,true);break;
+    // Red-tailed hawk screeching as it flies overhead: a high raspy "kee-eeeer" that sweeps
+    // left to right, swells as it passes, drops slightly in pitch, and fades into open sky
+    var pan=AC.createStereoPanner?AC.createStereoPanner():null,hg=AC.createGain(),sky=reverb(out,3.2,2.6),skyIn=AC.createGain();
+    skyIn.gain.value=0.5;skyIn.connect(sky);hg.connect(pan||out);if(pan)pan.connect(out);
+    if(pan){pan.pan.setValueAtTime(-0.9,t0);pan.pan.linearRampToValueAtTime(0.9,t0+4.2);}
+    hg.gain.setValueAtTime(0.35,t0);hg.gain.linearRampToValueAtTime(1,t0+1.6);hg.gain.linearRampToValueAtTime(0.25,t0+4.2);
+    noise(out,t0,4.6,"highpass",2500,function(p,t){p.linearRampToValueAtTime(0.04,t+1);p.linearRampToValueAtTime(0.0001,t+4.6);});
+    hawk(hg,skyIn,t0+0.1,1.6,3600,2300,.42);
+    hawk(hg,skyIn,t0+2.2,1.9,3400,2000,.36);break;
   case "chime":
     [84,88,91].forEach(function(m,i){note(out,t0+i*0.35,mf(m),2.4,.3,bell);});break;
   case "bowl":
@@ -425,7 +425,7 @@ function tilePreview(id,d){
   else if(id==="grammar")p=d.grammar;
   else if(id==="exit")p=d.exitQuestion;
   else if(id==="annotate")return '<span class="an-row">'+annList().map(function(a){return esc(a.symbol);}).join(" ")+'</span>';
-  else if(id==="seating")return '24 desks · '+esc(seatSection())+' <i>/ 24 escritorios</i>';
+  else if(id==="seating")return 'Desks & class jobs · '+esc(seatSection())+' <i>/ Asientos y trabajos</i>';
   return p?esc(p):soon();
 }
 function soundTile(){
@@ -527,7 +527,49 @@ function seatSection(){
 }
 function seatNames(sec){var all=st.seats||{},a=(all[sec]||[]).slice();while(a.length<24)a.push("");return a;}
 function setSeatNames(sec,a){if(!st.seats)st.seats={};st.seats[sec]=a;save();}
-function deskHTML(i,names){return '<button class="desk'+(seatPick===i?" pick":"")+(names[i]?"":" empty")+'" data-act="desk:'+i+'"><span class="dn">'+(i+1)+'</span><span class="dname">'+esc(names[i]||"")+'</span></button>';}
+function deskHTML(i,names){return '<button class="desk'+(seatPick===i?" pick":"")+(names[i]?"":" empty")+'" data-act="desk:'+i+'"><span class="dn">'+(i+1)+(i+1===(st.doorDesk||1)?" 🚪":"")+'</span><span class="dname">'+esc(names[i]||"")+'</span></button>';}
+// ----- class jobs (names stay on this device) -----
+var jobPick=null,jobEdit=false;
+function jobList(){return (st.jobs&&st.jobs.length)?st.jobs:JOBS_DEFAULT;}
+function saveJobs(list){st.jobs=list;save();}
+function jobAssign(sec){var a=(st.jobAssign||{})[sec]||{};return a;}
+function setJobAssign(sec,a){if(!st.jobAssign)st.jobAssign={};st.jobAssign[sec]=a;save();}
+function shuffleJobs(sec){
+  var names=seatNames(sec).filter(Boolean),pool=names.slice(),a={};
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  var door=seatNames(sec)[(st.doorDesk||1)-1];
+  var jobs=jobList().slice().sort(function(x,y){return (y.door?1:0)-(x.door?1:0);});
+  jobs.forEach(function(jb){a[jb.id]=[];for(var k=0;k<jb.slots;k++){
+    var pick=null;if(jb.door&&k===0&&door&&pool.indexOf(door)>-1)pick=door;else pick=pool[0];
+    if(pick){pool.splice(pool.indexOf(pick),1);a[jb.id].push(pick);}}});
+  setJobAssign(sec,a);
+}
+function jobsHTML(){
+  var sec=seatSection(),a=jobAssign(sec),jobs=jobList(),names=seatNames(sec).filter(Boolean);
+  var secs=SECTIONS.map(function(s){return '<button class="'+(s.id===sec?"on":"")+'" data-act="seatsec:'+s.id+'">'+s.id+'</button>';}).join("");
+  var cards=jobs.map(function(jb){
+    var who=a[jb.id]||[],slots="";for(var k=0;k<jb.slots;k++){var nm=who[k]||"";slots+='<button class="jb-slot'+(nm?"":" empty")+'" data-act="jobslot:'+jb.id+':'+k+'">'+(nm?esc(nm):"Tap to choose")+'</button>';}
+    return '<div class="jb"><div class="jb-h"><span class="jb-ic">'+esc(jb.icon||"⭐")+'</span><div><b>'+esc(jb.name)+'</b>'+(jb.nameEs?'<i>'+esc(jb.nameEs)+'</i>':"")+'</div></div>'+
+      '<div class="jb-d">'+esc(jb.desc||"")+(jb.descEs?'<i>'+esc(jb.descEs)+'</i>':"")+(jb.door?'<i class="jb-door">Sits at desk '+(st.doorDesk||1)+' 🚪</i>':"")+'</div><div class="jb-slots">'+slots+'</div></div>';
+  }).join("");
+  var modal="";
+  if(jobPick){var cur=(a[jobPick.id]||[])[jobPick.k]||"",used={};Object.keys(a).forEach(function(id){(a[id]||[]).forEach(function(n){used[n]=1;});});
+    modal='<div class="pk-back"><div class="pk"><header class="pk-h"><span>Choose a student <i>Elige a un estudiante</i></span><button class="pk-done" data-act="jobpick:">Cancel</button></header>'+
+      '<div class="pk-list">'+(names.length?names.map(function(n,i){return '<button class="pk-i'+(n===cur?" on":"")+'" data-act="jobset:'+i+'"><span class="pk-box">'+(n===cur?"✓":"")+'</span><span><b>'+esc(n)+'</b>'+(used[n]&&n!==cur?'<i>already has a job</i>':"")+'</span></button>';}).join(""):'<div class="seat-tip">No names yet. Add names on the 24 desks tab first.</div>')+'</div>'+
+      '<footer class="pk-f"><button data-act="jobset:-1">Clear this job</button> <button data-act="jobset:type">Type a name</button></footer></div></div>';}
+  if(jobEdit){
+    modal='<div class="pk-back"><div class="pk"><header class="pk-h"><span>Edit jobs <i>Editar trabajos</i></span><button class="pk-done" data-act="jobedit:off">Done</button></header>'+
+      '<div class="pk-list">'+jobs.map(function(jb,i){return '<div class="je"><span class="jb-ic">'+esc(jb.icon||"⭐")+'</span><div class="je-t"><b>'+esc(jb.name)+'</b><i>'+esc(jb.desc||"")+'</i></div>'+
+        '<div class="je-b"><button data-act="jobslots:'+i+':-1">−</button><span>'+jb.slots+' '+(jb.slots===1?"student":"students")+'</span><button data-act="jobslots:'+i+':1">+</button>'+
+        '<button data-act="jobren:'+i+'">✎ Name</button><button data-act="jobdesc:'+i+'">✎ Job</button><button data-act="jobicon:'+i+'">Icon</button><button data-act="jobup:'+i+'">↑</button><button data-act="jobdel:'+i+'">🗑</button></div></div>';}).join("")+'</div>'+
+      '<footer class="pk-f"><button data-act="jobadd">＋ Add a job</button> <button data-act="doordesk:-1">−</button> Door desk: '+(st.doorDesk||1)+' <button data-act="doordesk:1">+</button> <button data-act="jobreset">Reset to original jobs</button></footer></div></div>';}
+  return '<div class="seat"><div class="seat-bar"><span class="seat-secs">'+secs+'</span><span class="seat-secs"><button data-act="jobshuffle">🔀 Shuffle jobs</button><button data-act="jobedit:on">✎ Edit jobs</button><button data-act="jobclear">Clear</button></span></div>'+
+    '<div class="jb-grid">'+cards+'</div></div>'+modal;
+}
+function seatTabsHTML(slides){
+  var t=[["desks","🪑 24 desks"],["jobs","🧑‍🏫 Class jobs"]];if(slides)t.push(["slides","Google Slides chart"]);
+  return '<div class="seat-tabs">'+t.map(function(x){return '<button class="'+(seatTab===x[0]?"on":"")+'" data-act="seattab:'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div>';
+}
 function seatGridHTML(){
   var sec=seatSection(),names=seatNames(sec),lay=st.seatLayout||"groups",g="";
   if(lay==="groups"){for(var p=0;p<6;p++){g+='<div class="pod">';for(var k=0;k<4;k++)g+=deskHTML(p*4+k,names);g+='</div>';}}
@@ -579,14 +621,14 @@ function renderEntry(){
   var now=new Date(),n=currentDayN(now),d=getDay(n);
   var t=$("#eTime");if(t)t.textContent=now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
   var rts=picksFor("rt",d),mats=picksFor("mt",d);
-  var k=JSON.stringify([n,d.date,rts,mats,entryMax,entryPick,st.seats,st.seatLayout,seatMode,seatPick,seatShare,seatSection(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
+  var k=JSON.stringify([n,d.date,rts,mats,entryMax,entryPick,st.seats,st.seatLayout,seatMode,seatPick,seatShare,seatTab,st.jobs,st.jobAssign,st.doorDesk,jobPick,jobEdit,seatSection(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
   $("#entry").innerHTML='<div class="e-wrap">'+
     '<header class="e-h"><div><div class="e-cls">'+esc(CLASS_INFO.subject)+' · '+esc(CLASS_INFO.teacher)+' · '+esc(CLASS_INFO.room)+'</div><div class="e-wel">Welcome, Eagles! 🦅<i>¡Bienvenidos, Águilas!</i></div></div>'+
     '<div class="e-when"><div id="eTime">'+now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+'</div><div>'+now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})+' · Day '+n+'</div></div></header>'+
     '<div class="e-grid">'+
       eCard("rt","e-rt","When You Come In","Al llegar",'<div class="e-list">'+(rts.length?rts.map(function(x){return eItem(x.icon||"📌",x.text,x.textEs);}).join(""):eItem("📌","Nothing chosen yet","Nada elegido todavía"))+'</div>',true)+
       eCard("mt","e-mt","Materials to Have Ready","Materiales listos",'<div class="e-list">'+(mats.length?mats.map(function(m){return eItem(matIcon(m.text),m.text,m.textEs);}).join(""):eItem("📌","Nothing extra today","Nada extra hoy"))+'</div>',true)+
-      eCard("st","e-st","Seating Chart","Mapa de asientos",seatGridHTML())+
+      eCard("st","e-st","Seating Chart & Jobs","Asientos y trabajos",'<div class="e-seattabs">'+seatTabsHTML(false)+'</div>'+(seatTab==="jobs"?jobsHTML():seatGridHTML()))+
     '</div></div>'+(entryPick?pickerHTML(entryPick,d):"");
 }
 function render(){
@@ -717,8 +759,8 @@ function ovBody(id,d,now){
       (d.grammarAnswer?'<button class="btn" data-act="gramshow">'+(gramShow?"Hide answer":"Show answer")+' <i>/ '+(gramShow?"Ocultar respuesta":"Mostrar respuesta")+'</i></button>':"");
     case "exit":return '<div class="fit" data-max="72">'+bi(d.exitQuestion,d.exitQuestionEs)+'</div><div class="submit">Submit in Google Classroom <i>/ Entrégalo en Google Classroom</i></div>';
     case "video":var vu=videoUrl(d),id=ytId(vu);return id?'<iframe class="seat-frame" src="https://www.youtube-nocookie.com/embed/'+id+'?rel=0&modestbranding=1&playsinline=1" title="Video" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>':(vu?'<div class="vd-empty">This link is not a YouTube video. Use Open in new tab.</div>':'<div class="vd-empty">Add a YouTube link in Settings.</div>');
-    case "seating":var u=seatUrl();return '<div class="seat-tabs"><button class="'+(seatTab==="desks"?"on":"")+'" data-act="seattab:desks">🪑 24 desks</button><button class="'+(seatTab==="slides"?"on":"")+'" data-act="seattab:slides">Google Slides chart</button></div>'+
-      (seatTab==="desks"?seatGridHTML():(u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>'));
+    case "seating":var u=seatUrl();return seatTabsHTML(true)+
+      (seatTab==="desks"?seatGridHTML():seatTab==="jobs"?jobsHTML():(u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>'));
     case "timer":return timerHTML(true);
     case "bell":var bl=bellList(),cats=[];bl.forEach(function(b){if(cats.indexOf(b.category)<0)cats.push(b.category);});
       return '<div class="bl-top"><span class="bl-cur">Now showing: <b>'+(d.dnOv?"a bellringer you picked":"today\'s planned Do Now")+'</b></span><button class="btn" data-act="bellown">✎ Write your own</button>'+(d.dnOv?'<button class="btn bl-alt" data-act="bellclear">↺ Back to today\'s plan</button>':"")+'</div>'+
@@ -792,6 +834,28 @@ function act(a,el,e){
     case "bellclear":if(st.dnOv)delete st.dnOv[currentDayN(new Date())];save();closeOv();render();return;
     case "bellown":var en=prompt("Type your bellringer in English","");if(!en)return;var es=prompt("Spanish version (optional, you can leave this blank)","");
       if(!st.dnOv)st.dnOv={};st.dnOv[currentDayN(new Date())]={doNow:en.trim(),doNowEs:(es||"").trim()};save();closeOv();render();return;
+    case "jobpick":jobPick=null;refreshSeats();return;
+    case "jobslot":jobPick={id:p[1],k:+p[2]};refreshSeats();return;
+    case "jobset":if(!jobPick)return;
+      var jsec=seatSection(),ja=jobAssign(jsec),jn=seatNames(jsec).filter(Boolean),arr=(ja[jobPick.id]||[]).slice(),val;
+      if(p[1]==="type"){val=prompt("Student name (first name and last initial)","");if(val===null)return;val=val.trim();}else val=+p[1]<0?"":jn[+p[1]];
+      while(arr.length<=jobPick.k)arr.push("");arr[jobPick.k]=val;ja[jobPick.id]=arr;setJobAssign(jsec,ja);jobPick=null;refreshSeats();return;
+    case "jobshuffle":var ssec=seatSection();if(!seatNames(ssec).some(Boolean)){alert("Add names on the 24 desks tab first.");return;}
+      if(confirm("Shuffle all jobs for "+ssec+"? The student at the door desk becomes Door Manager.")){shuffleJobs(ssec);}refreshSeats();return;
+    case "jobclear":if(confirm("Clear all jobs for "+seatSection()+"?"))setJobAssign(seatSection(),{});refreshSeats();return;
+    case "jobedit":jobEdit=p[1]==="on";refreshSeats();return;
+    case "jobslots":var jl=jobList().slice();jl[+p[1]]=Object.assign({},jl[+p[1]],{slots:Math.max(1,Math.min(6,jl[+p[1]].slots+(+p[2])))});saveJobs(jl);refreshSeats();return;
+    case "jobren":var jl2=jobList().slice(),j2=jl2[+p[1]],nn=prompt("Job name in English",j2.name);if(nn===null)return;var ne=prompt("Job name in Spanish (optional)",j2.nameEs||"");
+      jl2[+p[1]]=Object.assign({},j2,{name:nn.trim()||j2.name,nameEs:ne===null?j2.nameEs:ne.trim()});saveJobs(jl2);refreshSeats();return;
+    case "jobdesc":var jl3=jobList().slice(),j3=jl3[+p[1]],dd=prompt("What does this job do? (English)",j3.desc||"");if(dd===null)return;var de=prompt("Spanish (optional)",j3.descEs||"");
+      jl3[+p[1]]=Object.assign({},j3,{desc:dd.trim(),descEs:de===null?j3.descEs:de.trim()});saveJobs(jl3);refreshSeats();return;
+    case "jobicon":var jl4=jobList().slice(),ic=prompt("Emoji for this job",jl4[+p[1]].icon||"");if(ic===null)return;jl4[+p[1]]=Object.assign({},jl4[+p[1]],{icon:ic.trim()});saveJobs(jl4);refreshSeats();return;
+    case "jobup":var jl5=jobList().slice(),ix=+p[1];if(ix>0){var tmp=jl5[ix-1];jl5[ix-1]=jl5[ix];jl5[ix]=tmp;saveJobs(jl5);}refreshSeats();return;
+    case "jobdel":var jl6=jobList().slice();if(confirm("Delete the job "+jl6[+p[1]].name+"?")){jl6.splice(+p[1],1);saveJobs(jl6);}refreshSeats();return;
+    case "jobadd":var an=prompt("New job name in English","");if(!an)return;var ae=prompt("Job name in Spanish (optional)","")||"";var ad=prompt("What does this job do? (English)","")||"";
+      var jl7=jobList().slice();jl7.push({id:"j"+Date.now(),icon:"⭐",name:an.trim(),nameEs:ae.trim(),desc:ad.trim(),descEs:"",slots:1});saveJobs(jl7);refreshSeats();return;
+    case "jobreset":if(confirm("Put back the original job list? Your job changes are removed."))saveJobs(null);refreshSeats();return;
+    case "doordesk":st.doorDesk=Math.max(1,Math.min(24,(st.doorDesk||1)+(+p[1])));save();refreshSeats();return;
     case "seatshare":seatShare=p[1]==="on";refreshSeats();return;
     case "seatcopy":var sl=seatShareLink(p[1]==="all"?"":seatSection());if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(sl).then(function(){alert("Link copied.");},function(){prompt("Copy this link:",sl);});}else prompt("Copy this link:",sl);return;
     case "seattab":seatTab=p[1];refreshSeats();return;
