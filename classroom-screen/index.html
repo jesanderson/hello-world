@@ -120,6 +120,13 @@ body.entry #entry{display:block;min-height:100vh}
 .desk.empty .dname::after{content:"—";color:var(--stone)}
 .desk.pick{border-color:var(--gold);background:var(--gold-l)}
 .e-st .seat{min-height:44vh}
+.sh-body{padding:16px 20px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;overflow:auto}
+.sh-qr{background:#fff;flex:0 0 auto}
+.sh-qr svg{width:min(52vh,420px);height:auto;display:block}
+.sh-txt{flex:1;min-width:240px;font-size:clamp(16px,1.8vw,22px);line-height:1.4}
+.sh-txt ol{margin:.4em 0 .8em;padding-left:1.3em}
+.sh-link{width:100%;font:inherit;font-size:.8em;padding:8px 10px;border:3px solid var(--stone);border-radius:10px}
+.sh-copy{margin-top:10px;background:var(--maroon);color:#fff;border-radius:12px;padding:10px 18px;font-weight:800}
 .rv{flex:1;overflow:hidden;min-height:0}
 .rv-track{list-style:none;margin:0;padding:0;animation:roll linear infinite}
 .rv-track li{font-size:52px;line-height:1.25;padding:18px 0;border-bottom:2px solid var(--stone)}
@@ -294,6 +301,7 @@ body.entry #entry{display:block;min-height:100vh}
   <main id="main"><div id="mainBody"></div><div id="chyron" data-act="open:rules" role="button" aria-label="Rules and Routines"></div></main>
   <div id="overlay"></div>
 </div>
+<script src="vendor/qrcode.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>

@@ -531,9 +531,38 @@ function seatGridHTML(){
   var modes=[["view","👀 View"],["move","↔ Swap"],["edit","✎ Names"]].map(function(m){return '<button class="'+(seatMode===m[0]?"on":"")+'" data-act="seatmode:'+m[0]+'">'+m[1]+'</button>';}).join("");
   var tip=seatMode==="move"?"Tap two desks to swap them. / Toca dos escritorios para cambiarlos.":seatMode==="edit"?"Tap a desk to type a name. / Toca un escritorio para escribir un nombre.":"";
   return '<div class="seat"><div class="seat-bar"><span class="seat-secs">'+secs+'</span><span class="seat-secs">'+modes+'</span>'+
-    '<span class="seat-secs"><button data-act="seatlay:'+(lay==="groups"?"rows":"groups")+'">'+(lay==="groups"?"▦ Rows":"▣ Groups")+'</button>'+(seatMode==="edit"?'<button data-act="seatpaste">Paste list</button><button data-act="seatclear">Clear</button>':"")+'</span></div>'+
+    '<span class="seat-secs"><button data-act="seatshare:on">📤 Share</button><button data-act="seatlay:'+(lay==="groups"?"rows":"groups")+'">'+(lay==="groups"?"▦ Rows":"▣ Groups")+'</button>'+(seatMode==="edit"?'<button data-act="seatpaste">Paste list</button><button data-act="seatclear">Clear</button>':"")+'</span></div>'+
     (tip?'<div class="seat-tip">'+tip+'</div>':"")+
-    '<div class="seat-front">Front of room / Frente del salón</div><div class="seat-grid '+lay+'">'+g+'</div></div>';
+    '<div class="seat-front">Front of room / Frente del salón</div><div class="seat-grid '+lay+'">'+g+'</div></div>'+(seatShare?shareHTML():"");
+}
+// ----- copy names between devices with a QR code or link (names ride in the #hash, never sent to a server) -----
+var seatShare=false;
+function seatShareData(only){
+  var s=st.seats||{};
+  return Object.keys(s).filter(function(k){return (!only||k===only)&&(s[k]||[]).some(Boolean);}).map(function(k){
+    var a=s[k].slice();while(a.length&&!a[a.length-1])a.pop();
+    return k+":"+a.map(function(n){return String(n||"").replace(/[|;:]/g," ");}).join("|");
+  }).join(";");
+}
+function seatShareLink(only){return location.origin+location.pathname+(ENTRY?"":"?view=entry")+"#seats="+encodeURIComponent(seatShareData(only));}
+function shareHTML(){
+  var sec=seatSection(),data=seatShareData(sec),count=data?1:0,all=seatShareData(),allCount=all?all.split(";").length:0,link=seatShareLink(sec),qr="";
+  if(count&&typeof qrcode==="function"){try{var q=qrcode(0,"L");q.addData(link);q.make();qr=q.createSvgTag({cellSize:4,margin:4});}catch(e){qr="";}}
+  return '<div class="pk-back"><div class="pk"><header class="pk-h"><span>Copy names to another device <i>Copiar nombres a otro dispositivo</i></span><button class="pk-done" data-act="seatshare:off">Done</button></header>'+
+    (count?'<div class="sh-body">'+(qr?'<div class="sh-qr">'+qr+'</div>':"")+'<div class="sh-txt">This code copies seating names for class <b>'+esc(sec)+'</b>. Pick another class at the top to share it next.<ol>'+
+      '<li>On the iPad, open the Camera and point it at this code. Tap the link that pops up.</li><li>Or copy the link below and open it on the other device.</li><li>Tap OK when it asks to copy the names.</li></ol>'+
+      '<input class="sh-link" readonly value="'+esc(link)+'"><br><button class="sh-copy" data-act="seatcopy:one">Copy link for '+esc(sec)+'</button>'+(allCount>1?' <button class="sh-copy" data-act="seatcopy:all">Copy link for all '+allCount+' classes</button>':"")+'</div></div>'
+    :'<div class="sh-body"><div class="sh-txt">No names yet for class '+esc(sec)+'. Add names with ✎ Names first, or pick another class at the top.</div></div>')+'</div></div>';
+}
+function importSeatsFromHash(){
+  var h=location.hash;if(h.indexOf("#seats=")!==0)return;
+  var raw="";try{raw=decodeURIComponent(h.slice(7));}catch(e){}
+  history.replaceState(null,"",location.pathname+location.search);
+  var got={};raw.split(";").forEach(function(part){var i=part.indexOf(":");if(i<1)return;var k=part.slice(0,i).trim(),names=part.slice(i+1).split("|").slice(0,24);if(k)got[k]=names;});
+  var keys=Object.keys(got);if(!keys.length)return;
+  if(confirm("Copy seating names for "+keys.join(", ")+" onto this device? This replaces the names already here for those classes.")){
+    if(!st.seats)st.seats={};keys.forEach(function(k){st.seats[k]=got[k];});save();
+  }
 }
 function deskTap(i){
   var sec=seatSection(),a=seatNames(sec);
@@ -545,7 +574,7 @@ function renderEntry(){
   var now=new Date(),n=currentDayN(now),d=getDay(n);
   var t=$("#eTime");if(t)t.textContent=now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
   var rts=picksFor("rt",d),mats=picksFor("mt",d);
-  var k=JSON.stringify([n,d.date,rts,mats,entryMax,entryPick,st.seats,st.seatLayout,seatMode,seatPick,seatSection(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
+  var k=JSON.stringify([n,d.date,rts,mats,entryMax,entryPick,st.seats,st.seatLayout,seatMode,seatPick,seatShare,seatSection(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
   $("#entry").innerHTML='<div class="e-wrap">'+
     '<header class="e-h"><div><div class="e-cls">'+esc(CLASS_INFO.subject)+' · '+esc(CLASS_INFO.teacher)+' · '+esc(CLASS_INFO.room)+'</div><div class="e-wel">Welcome, Eagles! 🦅<i>¡Bienvenidos, Águilas!</i></div></div>'+
     '<div class="e-when"><div id="eTime">'+now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+'</div><div>'+now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})+' · Day '+n+'</div></div></header>'+
@@ -736,6 +765,8 @@ function act(a,el,e){
     case "seatsec":seatSecSel=p[1];seatPick=-1;refreshSeats();return;
     case "seatmode":seatMode=p[1];seatPick=-1;refreshSeats();return;
     case "seatlay":st.seatLayout=p[1];save();refreshSeats();return;
+    case "seatshare":seatShare=p[1]==="on";refreshSeats();return;
+    case "seatcopy":var sl=seatShareLink(p[1]==="all"?"":seatSection());if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(sl).then(function(){alert("Link copied.");},function(){prompt("Copy this link:",sl);});}else prompt("Copy this link:",sl);return;
     case "seattab":seatTab=p[1];refreshSeats();return;
     case "desk":deskTap(+p[1]);refreshSeats();return;
     case "seatpaste":var lst=prompt("Paste names in desk order, separated by commas (first name and last initial)","");
@@ -777,6 +808,7 @@ setInterval(scaleBoard,2000);
 
 // ---------- start ----------
 if(ENTRY)document.body.classList.add("entry");
+importSeatsFromHash();
 scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();loadEntry();
 setInterval(function(){loadSheet();loadRules();loadAnnotations();loadEntry();},5*60*1000);
 var lastMin=new Date().getMinutes();
