@@ -23,6 +23,26 @@ var ENTRY_DEFAULT=[
   {icon:"🪑",text:"Once you sit down, stay seated unless you are told to get up.",textEs:"Cuando te sientes, quédate en tu lugar a menos que te indiquen que te levantes."},
   {icon:"🚻",text:"Bathroom breaks are for emergencies only.",textEs:"Ir al baño es solo para emergencias."}
 ];
+// Bellringer menu for the Do Now. The Sheet's "Bellringers" tab (category, prompt, promptEs) replaces these.
+var BELL_DEFAULT=[
+  {category:"Quick write",prompt:"Write about a time someone helped you. What did they do?",promptEs:"Escribe sobre una vez que alguien te ayudó. ¿Qué hizo?"},
+  {category:"Quick write",prompt:"Who is someone you look up to? Why?",promptEs:"¿A quién admiras? ¿Por qué?"},
+  {category:"Quick write",prompt:"Describe a friend using three adjectives. Explain one of them.",promptEs:"Describe a un amigo con tres adjetivos. Explica uno de ellos."},
+  {category:"Quick write",prompt:"Would you rather have one best friend or many good friends? Why?",promptEs:"¿Prefieres tener un mejor amigo o muchos buenos amigos? ¿Por qué?"},
+  {category:"Reading",prompt:"Write one question you have about yesterday's reading.",promptEs:"Escribe una pregunta que tengas sobre la lectura de ayer."},
+  {category:"Reading",prompt:"Summarize yesterday's reading in two sentences.",promptEs:"Resume la lectura de ayer en dos oraciones."},
+  {category:"Reading",prompt:"Predict what will happen next in the story. Use the word because.",promptEs:"Predice qué pasará después en la historia. Usa la palabra porque."},
+  {category:"Reading",prompt:"Pick a character. How do they feel right now? What in the text shows it?",promptEs:"Escoge un personaje. ¿Cómo se siente ahora? ¿Qué parte del texto lo muestra?"},
+  {category:"Vocabulary",prompt:"Use two word bank words in one sentence.",promptEs:"Usa dos palabras del banco de palabras en una oración."},
+  {category:"Vocabulary",prompt:"Pick a word bank word. Draw it and write what it means.",promptEs:"Escoge una palabra del banco de palabras. Dibújala y escribe qué significa."},
+  {category:"Grammar",prompt:"Fix the sentence: me and him went to the store yesterday",promptEs:"Corrige la oración en inglés: me and him went to the store yesterday"},
+  {category:"Grammar",prompt:"Combine into one sentence: Sal was sad. She missed her mom.",promptEs:"Combina en una oración en inglés: Sal was sad. She missed her mom."},
+  {category:"Opinion",prompt:"Agree or disagree: Friends are more important than family. Give one reason.",promptEs:"¿De acuerdo o no? Los amigos son más importantes que la familia. Da una razón."},
+  {category:"Opinion",prompt:"Agree or disagree: Middle school is harder than elementary school. Why?",promptEs:"¿De acuerdo o no? La secundaria es más difícil que la primaria. ¿Por qué?"},
+  {category:"Check-in",prompt:"How are you feeling today, from 1 to 5? What is one thing that would help?",promptEs:"¿Cómo te sientes hoy, del 1 al 5? ¿Qué te ayudaría?"},
+  {category:"Check-in",prompt:"Write one goal for today's class.",promptEs:"Escribe una meta para la clase de hoy."}
+];
+
 // Extra options you can pick from for "When You Come In" (the Sheet's Hallway tab or ENTRY_DEFAULT stay the daily default).
 var ROUTINE_BANK=[
   {icon:"🤫",text:"Line up quietly and wait to be invited in.",textEs:"Haz fila en silencio y espera a que te invitemos a entrar."},

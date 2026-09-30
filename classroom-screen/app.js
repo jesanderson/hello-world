@@ -56,6 +56,7 @@ function getDay(n){
   if(r){for(var c in r){var v=String(r[c]==null?"":r[c]).trim();if(v!=="")d[c]=v;}}
   d.date=normDate(d.date);
   d.doNowMins=parseInt(d.doNowMins,10)||5;
+  var ov=(st.dnOv||{})[n];if(ov){d.doNow=ov.doNow;d.doNowEs=ov.doNowEs||"";d.dnOv=true;}
   return d;
 }
 function currentDayN(now){
@@ -436,16 +437,20 @@ function tilesHTML(d){
     return '<button class="tile" data-act="open:'+t[0]+'"><div class="tile-h"><span class="tile-t">'+t[1]+'</span><span class="h-x" aria-hidden="true">⤢</span></div><div class="tile-es">'+t[2]+'</div><div class="tile-p">'+tilePreview(t[0],d)+'</div></button>';
   }).join("");
 }
+var weekAnchor=null;
+function mondayOf(dt){var m=new Date(dt);m.setDate(dt.getDate()-(dt.getDay()===0?6:dt.getDay()-1));m.setHours(0,0,0,0);return m;}
 function weekHTML(n){
-  var d=getDay(n),base=d.date?parseYmd(d.date):new Date(),dow=base.getDay();
-  var mon=new Date(base);mon.setDate(base.getDate()-(dow===0?6:dow-1));
+  var d=getDay(n),base=weekAnchor||(d.date?parseYmd(d.date):new Date());
+  var mon=mondayOf(base),thisMon=mondayOf(new Date());
   var today=ymd(new Date()),byDate={};
   dayNums().forEach(function(k){var x=getDay(k);if(x.date)byDate[x.date]=x;});
-  return '<div class="wk-l"><div>This Week</div><i>Esta semana</i></div>'+[0,1,2,3,4].map(function(i){
+  var isThis=ymd(mon)===ymd(thisMon);
+  var label=isThis?'This Week<i>Esta semana</i>':'Week of '+mon.toLocaleDateString("en-US",{month:"short",day:"numeric"})+'<i>Semana del '+mon.getDate()+'</i>';
+  return '<div class="wk-l"><button class="wk-home" data-act="day:auto" title="Back to today">'+label+'</button><div class="wk-nav"><button data-act="week:-1" aria-label="Previous week">‹</button><button data-act="week:1" aria-label="Next week">›</button></div></div>'+[0,1,2,3,4].map(function(i){
     var x=new Date(mon);x.setDate(mon.getDate()+i);
     var k=ymd(x),u=byDate[k],sel=u&&u.day===n;
     return '<button class="wk'+(sel?" sel":"")+(k===today?" tod":"")+'"'+(u?' data-act="day:set:'+u.day+'"':"")+'>'+
-      '<div class="wk-d"><span>'+["Mon","Tue","Wed","Thu","Fri"][i]+'</span><b>'+x.getDate()+'</b></div>'+
+      '<div class="wk-d"><span>'+(k===today?"Today":["Mon","Tue","Wed","Thu","Fri"][i])+'</span><b>'+x.getDate()+'</b></div>'+
       '<div class="wk-x">'+(u?'<span class="wk-n">Day '+u.day+'</span> '+esc(u.topic):'<span class="wk-no">No class <i>/ Sin clases</i></span>')+'</div></button>';
   }).join("");
 }
@@ -467,7 +472,7 @@ function sideHTML(now){
 function mainHTML(now,d,n){
   var s=sectionInfo(now);
   return '<div class="top"><div class="col">'+
-      card("donow","Do Now","Para empezar",doNowBody(d),"c-donow",'<button class="h-btn" data-act="dstart">▶ '+d.doNowMins+':00</button>')+
+      card("donow","Do Now","Para empezar",doNowBody(d),"c-donow",'<button class="h-btn h-bell'+(d.dnOv?" on":"")+'" data-act="open:bell">☰ Bellringers</button><button class="h-btn" data-act="dstart">▶ '+d.doNowMins+':00</button>')+
       card("agenda","Agenda","Agenda",agendaBody(d,s.minsIn),"c-agenda")+
     '</div><div class="col">'+
       card("target","Learning Target","Meta de aprendizaje",bi(d.learningTarget,d.learningTargetEs),"c-target")+
@@ -626,6 +631,17 @@ function loadEntry(){
     st.entryCache=out;save();if(ENTRY)render();
   }).catch(function(){});
 }
+function bellList(){return (st.bellCache&&st.bellCache.length)?st.bellCache:BELL_DEFAULT;}
+function loadBells(){
+  var u=sheetUrl();if(!/\/gviz\/tq/.test(u))return;
+  fetch(u+"&sheet=Bellringers",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
+    if(/^\s*</.test(t))throw 0;
+    var rows=parseCSV(t),head=(rows.shift()||[]).map(function(h){return h.trim().toLowerCase();});
+    var ci=head.indexOf("category"),pi=head.indexOf("prompt"),ei=head.indexOf("promptes");if(pi<0)throw 0;
+    var out=rows.map(function(r){return {category:ci>-1?String(r[ci]||"").trim()||"Other":"Other",prompt:String(r[pi]||"").trim(),promptEs:ei>-1?String(r[ei]||"").trim():""};}).filter(function(x){return x.prompt;});
+    if(!out.length)throw 0;st.bellCache=out;save();
+  }).catch(function(){});
+}
 function loadRules(){
   var u=rulesUrl();if(!u)return;
   fetch(u,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
@@ -642,7 +658,7 @@ function loadRules(){
 var OV=null,vocabOpen=null,gramShow=false;
 var OVT={donow:["Do Now","Para empezar"],agenda:["Agenda","Agenda"],target:["Learning Target","Meta de aprendizaje"],clo:["Language Objective","Objetivo de lenguaje"],standards:["Standards","Estándares"],
   task:["Today's Task","Tarea de hoy"],criteria:["Success Criteria","Criterios de éxito"],vocab:["Vocabulary","Vocabulario"],grammar:["Grammar","Gramática"],exit:["Exit Ticket","Boleto de salida"],
-  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
+  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],bell:["Bellringers","Actividades de inicio"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
 function seatEmbed(u){
   var m=u.match(/docs\.google\.com\/presentation\/d\/([^\/?#]+)/);
   return m?"https://docs.google.com/presentation/d/"+m[1]+"/embed?start=false&loop=false&delayms=600000":u;
@@ -704,6 +720,9 @@ function ovBody(id,d,now){
     case "seating":var u=seatUrl();return '<div class="seat-tabs"><button class="'+(seatTab==="desks"?"on":"")+'" data-act="seattab:desks">🪑 24 desks</button><button class="'+(seatTab==="slides"?"on":"")+'" data-act="seattab:slides">Google Slides chart</button></div>'+
       (seatTab==="desks"?seatGridHTML():(u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>'));
     case "timer":return timerHTML(true);
+    case "bell":var bl=bellList(),cats=[];bl.forEach(function(b){if(cats.indexOf(b.category)<0)cats.push(b.category);});
+      return '<div class="bl-top"><span class="bl-cur">Now showing: <b>'+(d.dnOv?"a bellringer you picked":"today\'s planned Do Now")+'</b></span><button class="btn" data-act="bellown">✎ Write your own</button>'+(d.dnOv?'<button class="btn bl-alt" data-act="bellclear">↺ Back to today\'s plan</button>':"")+'</div>'+
+        '<div class="bl">'+cats.map(function(c){return '<div class="bl-cat"><div class="bl-ch">'+esc(c)+'</div>'+bl.map(function(b,i){return b.category===c?'<button class="bl-i" data-act="bellpick:'+i+'"><b>'+esc(b.prompt)+'</b>'+(b.promptEs?'<i>'+esc(b.promptEs)+'</i>':"")+'</button>':"";}).join("")+'</div>';}).join("")+'</div>';
     case "sounds":return '<div class="sb">'+BOARD.map(function(b){return '<button class="sb-b" data-act="snd:'+b[0]+'"><span class="sb-ic">'+b[3]+'</span><span class="sb-en">'+esc(b[1])+'</span><i>'+esc(b[2])+'</i></button>';}).join("")+'</div>';
     case "annotate":return '<div class="an">'+annList().map(function(a){return '<div class="an-c"><div class="an-s">'+esc(a.symbol)+'</div><div class="an-t"><div class="an-l">'+esc(a.label)+(a.labelEs?' <i>/ '+esc(a.labelEs)+'</i>':"")+'</div><div class="an-m">'+esc(a.meaning)+'</div>'+(a.meaningEs?'<div class="es">'+esc(a.meaningEs)+'</div>':"")+'</div></div>';}).join("")+'</div>';
     case "rules":var r=rulesList(),li=r.map(function(x,i){return '<li><b>'+(i+1)+'.</b> <span class="en">'+esc(x.rule)+'</span>'+(x.ruleEs?'<div class="es">'+esc(x.ruleEs)+'</div>':"")+'</li>';}).join("");
@@ -746,6 +765,7 @@ function act(a,el,e){
     case "dstart":var d=getDay(currentDayN(new Date()));tSet(d.doNowMins*60);tStart();return;
     case "day":
       var nums=dayNums(),cur=currentDayN(new Date()),i=nums.indexOf(cur);
+      weekAnchor=null;
       if(p[1]==="auto")setDay("auto");
       else if(p[1]==="set")setDay(+p[2]);
       else setDay(nums[Math.max(0,Math.min(nums.length-1,i+(p[1]==="next"?1:-1)))]);
@@ -757,7 +777,7 @@ function act(a,el,e){
     case "sndstop":stopSounds();return;
     case "zoom":st.zoom=p[1]==="auto"?1:Math.max(0.5,Math.min(1.5,Math.round(((st.zoom||1)+(p[1]==="in"?0.05:-0.05))*100)/100));save();scaleBoard(true);renderOv();return;
     case "sheetsave":st.sheetUrl=$("#sheetIn").value.trim();save();loadSheet();return;
-    case "sheetreload":loadSheet();loadRules();loadAnnotations();loadEntry();return;
+    case "sheetreload":loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();return;
     case "emax":entryMax=entryMax===p[1]?"":p[1];entryKey="";render();return;
     case "epick":entryPick=p[1]||"";entryKey="";render();return;
     case "etog":togglePick(p[1],+p[2]);entryKey="";render();return;
@@ -765,6 +785,13 @@ function act(a,el,e){
     case "seatsec":seatSecSel=p[1];seatPick=-1;refreshSeats();return;
     case "seatmode":seatMode=p[1];seatPick=-1;refreshSeats();return;
     case "seatlay":st.seatLayout=p[1];save();refreshSeats();return;
+    case "week":
+      var wb=weekAnchor||(function(){var dd=getDay(currentDayN(new Date()));return dd.date?parseYmd(dd.date):new Date();})();
+      weekAnchor=new Date(wb);weekAnchor.setDate(wb.getDate()+7*(+p[1]));render();return;
+    case "bellpick":var bb=bellList()[+p[1]],bn=currentDayN(new Date());if(!st.dnOv)st.dnOv={};st.dnOv[bn]={doNow:bb.prompt,doNowEs:bb.promptEs||""};save();closeOv();render();return;
+    case "bellclear":if(st.dnOv)delete st.dnOv[currentDayN(new Date())];save();closeOv();render();return;
+    case "bellown":var en=prompt("Type your bellringer in English","");if(!en)return;var es=prompt("Spanish version (optional, you can leave this blank)","");
+      if(!st.dnOv)st.dnOv={};st.dnOv[currentDayN(new Date())]={doNow:en.trim(),doNowEs:(es||"").trim()};save();closeOv();render();return;
     case "seatshare":seatShare=p[1]==="on";refreshSeats();return;
     case "seatcopy":var sl=seatShareLink(p[1]==="all"?"":seatSection());if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(sl).then(function(){alert("Link copied.");},function(){prompt("Copy this link:",sl);});}else prompt("Copy this link:",sl);return;
     case "seattab":seatTab=p[1];refreshSeats();return;
@@ -809,8 +836,8 @@ setInterval(scaleBoard,2000);
 // ---------- start ----------
 if(ENTRY)document.body.classList.add("entry");
 importSeatsFromHash();
-scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();loadEntry();
-setInterval(function(){loadSheet();loadRules();loadAnnotations();loadEntry();},5*60*1000);
+scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();
+setInterval(function(){loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();},5*60*1000);
 var lastMin=new Date().getMinutes();
 setInterval(function(){
   tickTimers();
