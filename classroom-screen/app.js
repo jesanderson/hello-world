@@ -154,6 +154,7 @@ var BOARD=[["eagle","Eagle","Águila","🦅"],["chime","Attention chime","Campan
   ["waterfall","Waterfall","Cascada","🏞️"],["rain","Rain","Lluvia","🌧️"],["thunder","Thunder","Trueno","⛈️"],["birds","Birdsong","Pájaros","🐦"],
   ["windchimes","Wind chimes","Campanas de viento","🎐"],["gong","Gong","Gong","🌕"],["schoolbell","School bell","Timbre escolar","🏫"],["whistle","Whistle","Silbato","⚽"],
   ["clock","Clock ticking","Reloj","🕰️"],["sparkle","Magic sparkle","Magia","✨"],
+  ["avalanche","Avalanche","Avalancha","🏔️"],["chickens","Chickens","Gallinas","🐔"],["battle","Battle sounds","Sonidos de batalla","⚔️"],
   ["calypso","Calypso","Calipso","🌴"],["ocean","Ocean waves","Olas del mar","🌊"],["marimba","Marimba","Marimba","🎵"]];
 var bus=null,fileAudio=[];
 function getBus(){if(!bus){bus=AC.createGain();bus.gain.value=1;bus.connect(AC.destination);}return bus;}

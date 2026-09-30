@@ -13,7 +13,7 @@ var CLASS_INFO={
 
 // Recorded sounds that replace the built-in ones, by soundboard id.
 // Files go in classroom-screen/sounds/ (public domain or free-license only).
-var SOUND_FILES={};
+var SOUND_FILES={avalanche:"sounds/avalanche.mp3",chickens:"sounds/chickens.mp3",battle:"sounds/battle.mp3"};
 
 // Hallway iPad view (?view=entry). The Sheet's "Hallway" tab (columns icon, text, textEs) replaces these.
 var ENTRY_DEFAULT=[
