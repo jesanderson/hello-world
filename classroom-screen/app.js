@@ -151,6 +151,10 @@ var BOARD=[["eagle","Eagle","Águila","🦅"],["chime","Attention chime","Campan
   ["correct","Correct!","¡Correcto!","✅"],["wrong","Try again","Intenta otra vez","❌"],["levelup","Level up!","¡Subiste de nivel!","⭐"],
   ["tada","Ta-da!","¡Tarán!","🎉"],["applause","Applause","Aplausos","👏"],["sadtrombone","Sad trombone","Trombón triste","🎺"],["dundun","Dun dun DUN","Momento dramático","😮"],
   ["crickets","Crickets","Grillos","🦗"],["boom","Boom","Bum","💥"],["scratch","Record scratch","Rayón de disco","💿"],["rimshot","Ba-dum-tss","Ba-dum-tss","😂"],
+  ["waterfall","Waterfall","Cascada","🏞️"],["rain","Rain","Lluvia","🌧️"],["thunder","Thunder","Trueno","⛈️"],["birds","Birdsong","Pájaros","🐦"],
+  ["windchimes","Wind chimes","Campanas de viento","🎐"],["gong","Gong","Gong","🌕"],["schoolbell","School bell","Timbre escolar","🏫"],["whistle","Whistle","Silbato","⚽"],
+  ["clock","Clock ticking","Reloj","🕰️"],["sparkle","Magic sparkle","Magia","✨"],
+  ["avalanche","Avalanche","Avalancha","🏔️"],["chickens","Chickens","Gallinas","🐔"],["battle","Battle sounds","Sonidos de batalla","⚔️"],
   ["calypso","Calypso","Calipso","🌴"],["ocean","Ocean waves","Olas del mar","🌊"],["marimba","Marimba","Marimba","🎵"]];
 var bus=null,fileAudio=[];
 function getBus(){if(!bus){bus=AC.createGain();bus.gain.value=1;bus.connect(AC.destination);}return bus;}
@@ -181,11 +185,11 @@ function crash(out,t,vol,dur){
 }
 // A raspy, descending hawk-style scream: several detuned sawtooth voices,
 // fast amplitude flutter for the rasp, breath noise, and outdoor reverb.
-function hawk(out,wet,t,dur,f0,f1,vol){
+function hawk(out,wet,t,dur,f0,f1,vol,deep){
   var am=AC.createGain(),hp=AC.createBiquadFilter(),pk=AC.createBiquadFilter(),g=AC.createGain();
-  hp.type="highpass";hp.frequency.value=1100;pk.type="peaking";pk.frequency.value=3200;pk.gain.value=9;pk.Q.value=1.2;
+  hp.type="highpass";hp.frequency.value=deep?550:1100;pk.type="peaking";pk.frequency.value=deep?1900:3200;pk.gain.value=9;pk.Q.value=1.2;
   am.gain.value=0.55;
-  var fl=AC.createOscillator(),fg=AC.createGain();fl.type="square";fl.frequency.setValueAtTime(95,t);fl.frequency.linearRampToValueAtTime(140,t+dur);
+  var fl=AC.createOscillator(),fg=AC.createGain();fl.type="square";fl.frequency.setValueAtTime(deep?70:95,t);fl.frequency.linearRampToValueAtTime(deep?105:140,t+dur);
   fg.gain.value=0.45;fl.connect(fg);fg.connect(am.gain);fl.start(t);fl.stop(t+dur+0.05);
   var vib=AC.createOscillator(),vg=AC.createGain();vib.frequency.value=9;vg.gain.value=40;vib.connect(vg);vib.start(t);vib.stop(t+dur+0.05);
   [-14,0,11].forEach(function(det){
@@ -232,9 +236,15 @@ function playSound(name){
   case "marimba":
     [0,1.1].forEach(function(off){[72,76,79,84].forEach(function(m,i){note(out,t0+off+i*0.15,mf(m),0.6,.4,[[1,1],[4,.12,.3]]);});});break;
   case "eagle":
-    var rv=reverb(out,2.8,3),wet=AC.createGain();wet.gain.value=0.45;wet.connect(rv);
-    hawk(out,wet,t0,1.9,2900,1450,.4);
-    hawk(out,wet,t0+2.3,1.3,2700,1550,.3);break;
+    // Deep, majestic call over a canyon: wind, a wing sweep, a long low scream, and echoes
+    var rv=reverb(out,4.5,2.2),wet=AC.createGain();wet.gain.value=0.55;wet.connect(rv);
+    var dl=AC.createDelay(1),fb=AC.createGain(),dlp=AC.createBiquadFilter();dl.delayTime.value=0.42;fb.gain.value=0.38;dlp.type="lowpass";dlp.frequency.value=2200;
+    wet.connect(dl);dl.connect(dlp);dlp.connect(fb);fb.connect(dl);dlp.connect(out);
+    noise(out,t0,6,"lowpass",450,function(p,t){p.linearRampToValueAtTime(0.25,t+1.5);p.linearRampToValueAtTime(0.15,t+4);p.linearRampToValueAtTime(0.0001,t+6);});
+    var ws=noise(out,t0,0.9,"bandpass",300,function(p,t){p.exponentialRampToValueAtTime(0.5,t+0.35);p.exponentialRampToValueAtTime(0.0001,t+0.9);},1.2);
+    ws.frequency.setValueAtTime(250,t0);ws.frequency.exponentialRampToValueAtTime(1400,t0+0.45);ws.frequency.exponentialRampToValueAtTime(400,t0+0.9);
+    hawk(out,wet,t0+0.6,2.5,2100,900,.45,true);
+    hawk(out,wet,t0+3.4,1.7,1900,950,.3,true);break;
   case "chime":
     [84,88,91].forEach(function(m,i){note(out,t0+i*0.35,mf(m),2.4,.3,bell);});break;
   case "bowl":
@@ -286,6 +296,44 @@ function playSound(name){
   case "scratch":
     var sf=noise(out,t0,0.7,"bandpass",1000,function(p,t){p.exponentialRampToValueAtTime(0.9,t+0.01);p.setValueAtTime(0.9,t+0.6);p.exponentialRampToValueAtTime(0.0001,t+0.7);},3);
     sf.frequency.setValueAtTime(600,t0);sf.frequency.linearRampToValueAtTime(2800,t0+0.18);sf.frequency.linearRampToValueAtTime(700,t0+0.36);sf.frequency.linearRampToValueAtTime(3200,t0+0.6);break;
+  case "waterfall":
+    var wl=10,wb=AC.createBuffer(2,AC.sampleRate*wl,AC.sampleRate);
+    for(var c=0;c<2;c++){var wd=wb.getChannelData(c),br=0;for(i=0;i<wd.length;i++){var r=Math.random()*2-1;br=(br+0.02*r)/1.02;wd[i]=br*2.5+r*0.35;}}
+    var wsrc=AC.createBufferSource(),wlp=AC.createBiquadFilter(),wg=AC.createGain();wsrc.buffer=wb;wlp.type="lowpass";wlp.frequency.value=4200;
+    wg.gain.setValueAtTime(0.0001,t0);wg.gain.linearRampToValueAtTime(0.9,t0+1.5);wg.gain.setValueAtTime(0.9,t0+wl-2);wg.gain.linearRampToValueAtTime(0.0001,t0+wl);
+    var wm=AC.createOscillator(),wmg=AC.createGain();wm.frequency.value=0.25;wmg.gain.value=0.12;wm.connect(wmg);wmg.connect(wg.gain);wm.start(t0);wm.stop(t0+wl);
+    wsrc.connect(wlp);wlp.connect(wg);wg.connect(out);wsrc.start(t0);wsrc.stop(t0+wl);break;
+  case "rain":
+    noise(out,t0,8,"bandpass",2500,function(p,t){p.linearRampToValueAtTime(0.35,t+1.2);p.setValueAtTime(0.35,t+6.5);p.linearRampToValueAtTime(0.0001,t+8);},0.4);
+    for(s=0.3;s<7.5;s+=0.02+Math.random()*0.06){note(out,t0+s,1800+Math.random()*3500,0.03,0.02+Math.random()*0.05,[[1,1]]);}break;
+  case "thunder":
+    noise(out,t0,0.25,"highpass",1800,hit(out,t0,0.6,0.25));
+    var th=noise(out,t0+0.05,6,"lowpass",220,function(p,t){p.exponentialRampToValueAtTime(1,t+0.15);for(var k=0.6;k<5;k+=0.4+Math.random()*0.5){p.linearRampToValueAtTime(0.3+Math.random()*0.7,t+k);}p.linearRampToValueAtTime(0.0001,t+6);});
+    var rv3=reverb(out,3,2);tom(rv3,t0+0.05,60,30,2.5,0.8);break;
+  case "birds":
+    for(s=0;s<5;s+=0.5+Math.random()*0.6){var bird=Math.random()<0.5?0:1,nChirp=2+Math.floor(Math.random()*4);
+      for(var k2=0;k2<nChirp;k2++){var tt=t0+s+k2*0.11,bo=AC.createOscillator(),bg=AC.createGain(),lo=bird?2600:3400,hi=bird?4200:5200;
+        bo.frequency.setValueAtTime(lo,tt);bo.frequency.exponentialRampToValueAtTime(hi,tt+0.05);bo.frequency.exponentialRampToValueAtTime(lo*1.1,tt+0.09);
+        bg.gain.setValueAtTime(0.0001,tt);bg.gain.exponentialRampToValueAtTime(0.09,tt+0.01);bg.gain.exponentialRampToValueAtTime(0.0001,tt+0.09);
+        bo.connect(bg);bg.connect(out);bo.start(tt);bo.stop(tt+0.1);}}break;
+  case "windchimes":
+    var pent=[84,86,88,91,93,96,98];for(s=0;s<5;s+=0.15+Math.random()*0.45){note(out,t0+s,mf(pent[Math.floor(Math.random()*pent.length)]),3,0.12+Math.random()*0.1,[[1,1],[2.76,.3,.5],[5.4,.1,.3]]);}break;
+  case "gong":
+    note(out,t0,98,8,0.35,[[1,1],[1.48,.6,.8],[2.1,.5,.6],[2.9,.3,.5],[3.8,.2,.4],[5.2,.1,.3]]);
+    noise(out,t0,4,"bandpass",600,function(p,t){p.exponentialRampToValueAtTime(0.15,t+0.4);p.exponentialRampToValueAtTime(0.0001,t+4);},1);break;
+  case "schoolbell":
+    for(s=0;s<2.5;s+=0.045){note(out,t0+s,1320,0.12,0.18,[[1,1],[2.4,.4]]);}break;
+  case "whistle":
+    [[0,0.35],[0.5,1]].forEach(function(b){var wo=AC.createOscillator(),wg2=AC.createGain(),tr=AC.createOscillator(),trg=AC.createGain();
+      wo.frequency.value=2800;tr.frequency.value=32;trg.gain.value=160;tr.connect(trg);trg.connect(wo.frequency);
+      wg2.gain.setValueAtTime(0.0001,t0+b[0]);wg2.gain.exponentialRampToValueAtTime(0.2,t0+b[0]+0.02);wg2.gain.setValueAtTime(0.2,t0+b[0]+b[1]-0.04);wg2.gain.exponentialRampToValueAtTime(0.0001,t0+b[0]+b[1]);
+      wo.connect(wg2);wg2.connect(out);wo.start(t0+b[0]);tr.start(t0+b[0]);wo.stop(t0+b[0]+b[1]+0.05);tr.stop(t0+b[0]+b[1]+0.05);
+      noise(out,t0+b[0],b[1],"bandpass",3000,function(p,t){p.exponentialRampToValueAtTime(0.08,t+0.02);p.exponentialRampToValueAtTime(0.0001,t+b[1]);},2);});break;
+  case "clock":
+    for(s=0;s<8;s+=0.5){var tick=Math.round(s*2)%2===0;noise(out,t0+s,0.03,tick?"highpass":"bandpass",tick?3500:1400,hit(out,t0+s,tick?0.35:0.3,0.03),tick?0:2);}break;
+  case "sparkle":
+    for(i=0;i<18;i++){note(out,t0+i*0.06+Math.random()*0.03,mf(88+Math.floor(Math.random()*20)),0.6,0.1,[[1,1],[2,.3]]);}
+    note(out,t0+1.15,mf(108),1.5,0.12,[[1,1],[1.5,.4]]);break;
   case "rimshot":
     tom(out,t0,220,160,0.25,0.7);tom(out,t0+0.2,150,100,0.35,0.8);crash(out,t0+0.45,0.35,1.2);break;
   }
@@ -376,7 +424,7 @@ function tilePreview(id,d){
   else if(id==="grammar")p=d.grammar;
   else if(id==="exit")p=d.exitQuestion;
   else if(id==="annotate")return '<span class="an-row">'+annList().map(function(a){return esc(a.symbol);}).join(" ")+'</span>';
-  else if(id==="seating")return 'Tap to open <i>/ Toca para abrir</i>';
+  else if(id==="seating")return '24 desks · '+esc(seatSection())+' <i>/ 24 escritorios</i>';
   return p?esc(p):soon();
 }
 function soundTile(){
@@ -429,7 +477,86 @@ function mainHTML(now,d,n){
     '<div class="tiles">'+tilesHTML(d)+'</div>'+
     '<div class="week">'+weekHTML(n)+'</div>';
 }
+var VIEW=(new URLSearchParams(location.search).get("view")||"").toLowerCase(),ENTRY=VIEW==="entry"||VIEW==="hallway";
+function entryList(){return (st.entryCache&&st.entryCache.length)?st.entryCache:ENTRY_DEFAULT;}
+function matIcon(m){var s=m.toLowerCase();for(var i=0;i<MATERIAL_ICONS.length;i++){if(new RegExp("(^|[^a-z])"+MATERIAL_ICONS[i][0]).test(s))return MATERIAL_ICONS[i][1];}return "📌";}
+var entryKey="",entryMax="";
+function eItem(ic,en,es){return '<div class="e-item"><span class="e-ic">'+esc(ic)+'</span><div><b>'+esc(en)+'</b>'+(es?'<i>'+esc(es)+'</i>':"")+'</div></div>';}
+function eCard(id,cls,t,te,body,editable){
+  return '<section class="e-card '+cls+(entryMax===id?" e-max":"")+'"><header class="e-ch"><span class="e-t" data-act="emax:'+id+'">'+t+' <i>'+te+'</i></span>'+
+    (editable?'<button class="e-edit" data-act="epick:'+id+'">✎ Choose</button>':"")+'<button class="e-x" data-act="emax:'+id+'" aria-label="Full screen">'+(entryMax===id?"✕":"⤢")+'</button></header>'+body+'</section>';
+}
+// ----- daily picks for the hallway checklist (this device only, resets each day) -----
+var entryPick="";
+function uniqBy(list){var seen={},out=[];list.forEach(function(x){var k=x.text.toLowerCase();if(!seen[k]){seen[k]=1;out.push(x);}});return out;}
+function matsDefault(d){
+  var en=String(d.materials||"").split(",").map(function(x){return x.trim();}).filter(Boolean),es=String(d.materialsEs||"").split(",").map(function(x){return x.trim();});
+  return en.map(function(m,i){return {text:m,textEs:es[i]||""};});
+}
+function bankFor(kind,d){return uniqBy(kind==="rt"?entryList().concat(ROUTINE_BANK):matsDefault(d).concat(MATERIAL_BANK));}
+function picksFor(kind,d){
+  var sel=st.entrySel,bank=bankFor(kind,d);
+  if(sel&&sel.date===ymd(new Date())&&sel[kind]){return sel[kind].map(function(t){for(var i=0;i<bank.length;i++)if(bank[i].text===t)return bank[i];return null;}).filter(Boolean);}
+  return kind==="rt"?entryList():matsDefault(d);
+}
+function togglePick(kind,idx){
+  var d=getDay(currentDayN(new Date())),bank=bankFor(kind,d),cur=picksFor(kind,d).map(function(x){return x.text;}),t=bank[idx].text;
+  var i=cur.indexOf(t);if(i>-1)cur.splice(i,1);else{
+    var order=bank.map(function(x){return x.text;});cur.push(t);cur.sort(function(x,y){return order.indexOf(x)-order.indexOf(y);});}
+  var today=ymd(new Date());if(!st.entrySel||st.entrySel.date!==today)st.entrySel={date:today};
+  st.entrySel[kind]=cur;save();
+}
+function pickerHTML(kind,d){
+  var bank=bankFor(kind,d),cur=picksFor(kind,d).map(function(x){return x.text;});
+  return '<div class="pk-back"><div class="pk"><header class="pk-h"><span>'+(kind==="rt"?"When You Come In":"Materials to Have Ready")+' <i>Choose for today / Elige para hoy</i></span><button class="pk-done" data-act="epick:">Done</button></header>'+
+    '<div class="pk-list">'+bank.map(function(x,i){var on=cur.indexOf(x.text)>-1;return '<button class="pk-i'+(on?" on":"")+'" data-act="etog:'+kind+':'+i+'"><span class="pk-box">'+(on?"✓":"")+'</span><span class="e-ic">'+esc(kind==="rt"?(x.icon||"📌"):matIcon(x.text))+'</span><span><b>'+esc(x.text)+'</b>'+(x.textEs?'<i>'+esc(x.textEs)+'</i>':"")+'</span></button>';}).join("")+'</div>'+
+    '<footer class="pk-f"><button data-act="ereset:'+kind+'">Reset to today\'s default</button></footer></div></div>';
+}
+// ----- 24-desk seating chart (names stay on this device only) -----
+var seatMode="view",seatPick=-1,seatSecSel="",seatTab="desks";
+function seatSection(){
+  if(seatSecSel)return seatSecSel;
+  var now=new Date(),s=sectionInfo(now);if(s.sec)return s.sec.id;
+  var m=now.getHours()*60+now.getMinutes();for(var i=0;i<SECTIONS.length;i++)if(toMin(SECTIONS[i].start)>m)return SECTIONS[i].id;
+  return SECTIONS[0].id;
+}
+function seatNames(sec){var all=st.seats||{},a=(all[sec]||[]).slice();while(a.length<24)a.push("");return a;}
+function setSeatNames(sec,a){if(!st.seats)st.seats={};st.seats[sec]=a;save();}
+function deskHTML(i,names){return '<button class="desk'+(seatPick===i?" pick":"")+(names[i]?"":" empty")+'" data-act="desk:'+i+'"><span class="dn">'+(i+1)+'</span><span class="dname">'+esc(names[i]||"")+'</span></button>';}
+function seatGridHTML(){
+  var sec=seatSection(),names=seatNames(sec),lay=st.seatLayout||"groups",g="";
+  if(lay==="groups"){for(var p=0;p<6;p++){g+='<div class="pod">';for(var k=0;k<4;k++)g+=deskHTML(p*4+k,names);g+='</div>';}}
+  else{for(var i=0;i<24;i++)g+=deskHTML(i,names);}
+  var secs=SECTIONS.map(function(s){return '<button class="'+(s.id===sec?"on":"")+'" data-act="seatsec:'+s.id+'">'+s.id+'</button>';}).join("");
+  var modes=[["view","👀 View"],["move","↔ Swap"],["edit","✎ Names"]].map(function(m){return '<button class="'+(seatMode===m[0]?"on":"")+'" data-act="seatmode:'+m[0]+'">'+m[1]+'</button>';}).join("");
+  var tip=seatMode==="move"?"Tap two desks to swap them. / Toca dos escritorios para cambiarlos.":seatMode==="edit"?"Tap a desk to type a name. / Toca un escritorio para escribir un nombre.":"";
+  return '<div class="seat"><div class="seat-bar"><span class="seat-secs">'+secs+'</span><span class="seat-secs">'+modes+'</span>'+
+    '<span class="seat-secs"><button data-act="seatlay:'+(lay==="groups"?"rows":"groups")+'">'+(lay==="groups"?"▦ Rows":"▣ Groups")+'</button>'+(seatMode==="edit"?'<button data-act="seatpaste">Paste list</button><button data-act="seatclear">Clear</button>':"")+'</span></div>'+
+    (tip?'<div class="seat-tip">'+tip+'</div>':"")+
+    '<div class="seat-front">Front of room / Frente del salón</div><div class="seat-grid '+lay+'">'+g+'</div></div>';
+}
+function deskTap(i){
+  var sec=seatSection(),a=seatNames(sec);
+  if(seatMode==="move"){if(seatPick<0){seatPick=i;}else{var t=a[seatPick];a[seatPick]=a[i];a[i]=t;setSeatNames(sec,a);seatPick=-1;}}
+  else if(seatMode==="edit"){var v=prompt("Name for desk "+(i+1)+" (first name and last initial)",a[i]||"");if(v!==null){a[i]=v.trim();setSeatNames(sec,a);}}
+}
+function refreshSeats(){if(ENTRY){entryKey="";render();}else renderOv();}
+function renderEntry(){
+  var now=new Date(),n=currentDayN(now),d=getDay(n);
+  var t=$("#eTime");if(t)t.textContent=now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  var rts=picksFor("rt",d),mats=picksFor("mt",d);
+  var k=JSON.stringify([n,d.date,rts,mats,entryMax,entryPick,st.seats,st.seatLayout,seatMode,seatPick,seatSection(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
+  $("#entry").innerHTML='<div class="e-wrap">'+
+    '<header class="e-h"><div><div class="e-cls">'+esc(CLASS_INFO.subject)+' · '+esc(CLASS_INFO.teacher)+' · '+esc(CLASS_INFO.room)+'</div><div class="e-wel">Welcome, Eagles! 🦅<i>¡Bienvenidos, Águilas!</i></div></div>'+
+    '<div class="e-when"><div id="eTime">'+now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+'</div><div>'+now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})+' · Day '+n+'</div></div></header>'+
+    '<div class="e-grid">'+
+      eCard("rt","e-rt","When You Come In","Al llegar",'<div class="e-list">'+(rts.length?rts.map(function(x){return eItem(x.icon||"📌",x.text,x.textEs);}).join(""):eItem("📌","Nothing chosen yet","Nada elegido todavía"))+'</div>',true)+
+      eCard("mt","e-mt","Materials to Have Ready","Materiales listos",'<div class="e-list">'+(mats.length?mats.map(function(m){return eItem(matIcon(m.text),m.text,m.textEs);}).join(""):eItem("📌","Nothing extra today","Nada extra hoy"))+'</div>',true)+
+      eCard("st","e-st","Seating Chart","Mapa de asientos",seatGridHTML())+
+    '</div></div>'+(entryPick?pickerHTML(entryPick,d):"");
+}
 function render(){
+  if(ENTRY){renderEntry();return;}
   var now=new Date(),n=currentDayN(now),d=getDay(n);
   $("#side").innerHTML=sideHTML(now);
   $("#mainBody").innerHTML=mainHTML(now,d,n);
@@ -457,6 +584,17 @@ function loadAnnotations(){
     var out=rows.map(function(r){return {symbol:get(r,"symbol"),label:get(r,"label"),labelEs:get(r,"labeles"),meaning:get(r,"meaning"),meaningEs:get(r,"meaninges")};}).filter(function(x){return x.symbol;});
     if(!out.length)throw 0;
     st.annCache=out;save();render();if(OV==="annotate")renderOv();
+  }).catch(function(){});
+}
+function loadEntry(){
+  var u=sheetUrl();if(!/\/gviz\/tq/.test(u))return;
+  fetch(u+"&sheet=Hallway",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
+    if(/^\s*</.test(t))throw 0;
+    var rows=parseCSV(t),head=(rows.shift()||[]).map(function(h){return h.trim().toLowerCase();});
+    var ii=head.indexOf("icon"),ti=head.indexOf("text"),ei=head.indexOf("textes");if(ti<0)throw 0;
+    var out=rows.map(function(r){return {icon:ii>-1?String(r[ii]||"").trim():"",text:String(r[ti]||"").trim(),textEs:ei>-1?String(r[ei]||"").trim():""};}).filter(function(x){return x.text;});
+    if(!out.length)throw 0;
+    st.entryCache=out;save();if(ENTRY)render();
   }).catch(function(){});
 }
 function loadRules(){
@@ -514,6 +652,7 @@ function settingsBody(now){
     '<div class="set-row"><div class="set-l">Lesson Sheet link</div><div class="set-c colm"><input id="sheetIn" value="'+esc(st.sheetUrl)+'" placeholder="Paste the Google Sheet link"><div class="set-c"><button data-act="sheetsave">Save</button><button data-act="sheetreload">Reload now</button><span class="set-note" id="sheetMsg">'+esc(sheetMsg)+'</span></div><div class="set-help">The screen checks the Sheet every 5 minutes. Blank cells use the built-in lesson.</div></div></div>'+
     '<div class="set-row"><div class="set-l">Video link</div><div class="set-c colm"><input id="vidIn" value="'+esc(st.videoUrl||CLASS_INFO.videoUrl)+'" placeholder="Paste a YouTube link"><div class="set-c"><button data-act="vidsave">Save</button><button data-act="open:video">▶ Play</button><span class="set-note">A videoUrl in the Sheet for a day plays instead on that day.</span></div></div></div>'+
     '<div class="set-row"><div class="set-l">Seating chart link</div><div class="set-c colm"><input id="seatIn" value="'+esc(st.seatingUrl||CLASS_INFO.seatingUrl)+'"><div class="set-c"><button data-act="seatsave">Save</button></div></div></div>'+
+    '<div class="set-row"><div class="set-l">Hallway iPad view</div><div class="set-c colm"><div class="set-help">Open this link on the iPad and bookmark it: <b>'+esc(location.origin+location.pathname)+'?view=entry</b></div><div class="set-c"><a class="ov-link" style="background:var(--maroon);color:#fff" href="?view=entry" target="_blank" rel="noopener">Open hallway view</a></div></div></div>'+
     '<div class="set-row"><div class="set-l">Screen</div><div class="set-c"><button data-act="fullscreen">Full screen browser</button></div></div>'+
     '<div class="set-row"><div class="set-l">Screen size</div><div class="set-c"><button data-act="zoom:out" aria-label="Smaller">−</button><span class="set-v">'+Math.round((st.zoom||1)*100)+'%</span><button data-act="zoom:in" aria-label="Bigger">+</button><button data-act="zoom:auto">Fit (100%)</button><span class="set-note">Screen reads as '+viewSize().w+' × '+viewSize().h+'</span></div></div>'+
   '</div>';
@@ -533,7 +672,8 @@ function ovBody(id,d,now){
       (d.grammarAnswer?'<button class="btn" data-act="gramshow">'+(gramShow?"Hide answer":"Show answer")+' <i>/ '+(gramShow?"Ocultar respuesta":"Mostrar respuesta")+'</i></button>':"");
     case "exit":return '<div class="fit" data-max="72">'+bi(d.exitQuestion,d.exitQuestionEs)+'</div><div class="submit">Submit in Google Classroom <i>/ Entrégalo en Google Classroom</i></div>';
     case "video":var vu=videoUrl(d),id=ytId(vu);return id?'<iframe class="seat-frame" src="https://www.youtube-nocookie.com/embed/'+id+'?rel=0&modestbranding=1&playsinline=1" title="Video" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>':(vu?'<div class="vd-empty">This link is not a YouTube video. Use Open in new tab.</div>':'<div class="vd-empty">Add a YouTube link in Settings.</div>');
-    case "seating":var u=seatUrl();return u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>';
+    case "seating":var u=seatUrl();return '<div class="seat-tabs"><button class="'+(seatTab==="desks"?"on":"")+'" data-act="seattab:desks">🪑 24 desks</button><button class="'+(seatTab==="slides"?"on":"")+'" data-act="seattab:slides">Google Slides chart</button></div>'+
+      (seatTab==="desks"?seatGridHTML():(u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>'));
     case "timer":return timerHTML(true);
     case "sounds":return '<div class="sb">'+BOARD.map(function(b){return '<button class="sb-b" data-act="snd:'+b[0]+'"><span class="sb-ic">'+b[3]+'</span><span class="sb-en">'+esc(b[1])+'</span><i>'+esc(b[2])+'</i></button>';}).join("")+'</div>';
     case "annotate":return '<div class="an">'+annList().map(function(a){return '<div class="an-c"><div class="an-s">'+esc(a.symbol)+'</div><div class="an-t"><div class="an-l">'+esc(a.label)+(a.labelEs?' <i>/ '+esc(a.labelEs)+'</i>':"")+'</div><div class="an-m">'+esc(a.meaning)+'</div>'+(a.meaningEs?'<div class="es">'+esc(a.meaningEs)+'</div>':"")+'</div></div>';}).join("")+'</div>';
@@ -588,7 +728,19 @@ function act(a,el,e){
     case "sndstop":stopSounds();return;
     case "zoom":st.zoom=p[1]==="auto"?1:Math.max(0.5,Math.min(1.5,Math.round(((st.zoom||1)+(p[1]==="in"?0.05:-0.05))*100)/100));save();scaleBoard(true);renderOv();return;
     case "sheetsave":st.sheetUrl=$("#sheetIn").value.trim();save();loadSheet();return;
-    case "sheetreload":loadSheet();loadRules();loadAnnotations();return;
+    case "sheetreload":loadSheet();loadRules();loadAnnotations();loadEntry();return;
+    case "emax":entryMax=entryMax===p[1]?"":p[1];entryKey="";render();return;
+    case "epick":entryPick=p[1]||"";entryKey="";render();return;
+    case "etog":togglePick(p[1],+p[2]);entryKey="";render();return;
+    case "ereset":if(st.entrySel)delete st.entrySel[p[1]];save();entryKey="";render();return;
+    case "seatsec":seatSecSel=p[1];seatPick=-1;refreshSeats();return;
+    case "seatmode":seatMode=p[1];seatPick=-1;refreshSeats();return;
+    case "seatlay":st.seatLayout=p[1];save();refreshSeats();return;
+    case "seattab":seatTab=p[1];refreshSeats();return;
+    case "desk":deskTap(+p[1]);refreshSeats();return;
+    case "seatpaste":var lst=prompt("Paste names in desk order, separated by commas (first name and last initial)","");
+      if(lst){var nm=lst.split(/[,\n]/).map(function(x){return x.trim();});var a2=seatNames(seatSection());for(var q=0;q<24;q++)if(nm[q]!==undefined)a2[q]=nm[q];setSeatNames(seatSection(),a2);}refreshSeats();return;
+    case "seatclear":if(confirm("Clear all names for "+seatSection()+"?")){setSeatNames(seatSection(),[]);}refreshSeats();return;
     case "vidsave":st.videoUrl=$("#vidIn").value.trim();save();renderOv();return;
     case "seatsave":st.seatingUrl=$("#seatIn").value.trim();save();renderOv();return;
     case "fullscreen":var r=document.documentElement;(r.requestFullscreen||r.webkitRequestFullscreen||function(){}).call(r);return;
@@ -611,6 +763,7 @@ function viewSize(){
 }
 var lastFit="";
 function scaleBoard(force){
+  if(ENTRY)return;
   var v=viewSize(),k=v.w+"x"+v.h+"x"+(st.zoom||1);if(!force&&k===lastFit)return;lastFit=k;
   var s=Math.min(v.w/W,v.h/H)*(st.zoom||1),b=$("#board");
   b.style.transform="translate("+Math.round((v.w-W*s)/2)+"px,"+Math.round((v.h-H*s)/2)+"px) scale("+s+")";
@@ -623,8 +776,9 @@ if(window.visualViewport)visualViewport.addEventListener("resize",function(){sca
 setInterval(scaleBoard,2000);
 
 // ---------- start ----------
-scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();
-setInterval(function(){loadSheet();loadRules();loadAnnotations();},5*60*1000);
+if(ENTRY)document.body.classList.add("entry");
+scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();loadEntry();
+setInterval(function(){loadSheet();loadRules();loadAnnotations();loadEntry();},5*60*1000);
 var lastMin=new Date().getMinutes();
 setInterval(function(){
   tickTimers();

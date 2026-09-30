@@ -13,7 +13,51 @@ var CLASS_INFO={
 
 // Recorded sounds that replace the built-in ones, by soundboard id.
 // Files go in classroom-screen/sounds/ (public domain or free-license only).
-var SOUND_FILES={};
+var SOUND_FILES={avalanche:"sounds/avalanche.mp3",chickens:"sounds/chickens.mp3",battle:"sounds/battle.mp3"};
+
+// Hallway iPad view (?view=entry). The Sheet's "Hallway" tab (columns icon, text, textEs) replaces these.
+var ENTRY_DEFAULT=[
+  {icon:"💧",text:"Put your water bottle on the counter.",textEs:"Pon tu botella de agua en el mostrador."},
+  {icon:"🎒",text:"Hang your backpack on your desk.",textEs:"Cuelga tu mochila en tu escritorio."},
+  {icon:"🚫",text:"No eating or drinking in class.",textEs:"No se come ni se bebe en clase."},
+  {icon:"🪑",text:"Once you sit down, stay seated unless you are told to get up.",textEs:"Cuando te sientes, quédate en tu lugar a menos que te indiquen que te levantes."},
+  {icon:"🚻",text:"Bathroom breaks are for emergencies only.",textEs:"Ir al baño es solo para emergencias."}
+];
+// Extra options you can pick from for "When You Come In" (the Sheet's Hallway tab or ENTRY_DEFAULT stay the daily default).
+var ROUTINE_BANK=[
+  {icon:"🤫",text:"Line up quietly and wait to be invited in.",textEs:"Haz fila en silencio y espera a que te invitemos a entrar."},
+  {icon:"🔇",text:"Voice level 0 when you walk in.",textEs:"Nivel de voz 0 al entrar."},
+  {icon:"📝",text:"Start the Do Now right away.",textEs:"Empieza el Para empezar de inmediato."},
+  {icon:"💺",text:"Go straight to your assigned seat.",textEs:"Ve directo a tu asiento asignado."},
+  {icon:"💻",text:"Grab your Chromebook from the cart.",textEs:"Toma tu Chromebook del carrito."},
+  {icon:"🔋",text:"Make sure your Chromebook is charged.",textEs:"Asegúrate de que tu Chromebook tenga carga."},
+  {icon:"📵",text:"Phones off and put away.",textEs:"Teléfonos apagados y guardados."},
+  {icon:"✏️",text:"Sharpen your pencil before the bell.",textEs:"Saca punta a tu lápiz antes del timbre."},
+  {icon:"📄",text:"Pick up today's handout at the door.",textEs:"Toma la hoja de hoy en la puerta."},
+  {icon:"📖",text:"Take out your independent reading book.",textEs:"Saca tu libro de lectura independiente."},
+  {icon:"👀",text:"Check the board for your group.",textEs:"Revisa el pizarrón para ver tu grupo."},
+  {icon:"🧢",text:"Hats and hoods off.",textEs:"Sin gorras ni capuchas."}
+];
+// Options for "Materials to Have Ready". Today's materials from the Sheet stay the daily default.
+var MATERIAL_BANK=[
+  {text:"Notebook or any paper",textEs:"Cuaderno o cualquier papel"},
+  {text:"Pencil",textEs:"Lápiz"},
+  {text:"Chromebook for Google Classroom",textEs:"Chromebook para Google Classroom"},
+  {text:"Charged Chromebook",textEs:"Chromebook con carga"},
+  {text:"Headphones or earbuds",textEs:"Audífonos"},
+  {text:"Independent reading book",textEs:"Libro de lectura independiente"},
+  {text:"Walk Two Moons packet",textEs:"Paquete de Walk Two Moons"},
+  {text:"Highlighter",textEs:"Marcador resaltador"},
+  {text:"Sticky notes",textEs:"Notas adhesivas"},
+  {text:"Folder",textEs:"Carpeta"},
+  {text:"Colored pencils",textEs:"Lápices de colores"},
+  {text:"Glue stick",textEs:"Pegamento en barra"},
+  {text:"Scissors",textEs:"Tijeras"},
+  {text:"Pen",textEs:"Pluma"}
+];
+
+// Picture for each material, matched by keyword (first match wins).
+var MATERIAL_ICONS=[["chromebook","💻"],["laptop","💻"],["notebook","📓"],["paper","📄"],["pencil","✏️"],["book","📖"],["pen","🖊️"],["packet","📄"],["handout","📄"],["novel","📖"],["headphone","🎧"],["earbud","🎧"],["highlight","🖍️"],["marker","🖍️"],["folder","📁"],["binder","📁"],["calculator","🧮"],["charger","🔌"],["scissors","✂️"],["glue","🧴"],["sticky","🗒️"],["water","💧"]];
 
 // Annotation Key. The Sheet's "Annotations" tab (columns symbol, label, labelEs, meaning, meaningEs) replaces these.
 var ANNOTATIONS_DEFAULT=[
