@@ -15,6 +15,17 @@ var CLASS_INFO={
 // Files go in classroom-screen/sounds/ (public domain or free-license only).
 var SOUND_FILES={};
 
+// Hallway iPad view (?view=entry). The Sheet's "Hallway" tab (columns icon, text, textEs) replaces these.
+var ENTRY_DEFAULT=[
+  {icon:"💧",text:"Put your water bottle on the counter.",textEs:"Pon tu botella de agua en el mostrador."},
+  {icon:"🎒",text:"Hang your backpack on your desk.",textEs:"Cuelga tu mochila en tu escritorio."},
+  {icon:"🚫",text:"No eating or drinking in class.",textEs:"No se come ni se bebe en clase."},
+  {icon:"🪑",text:"Once you sit down, stay seated unless you are told to get up.",textEs:"Cuando te sientes, quédate en tu lugar a menos que te indiquen que te levantes."},
+  {icon:"🚻",text:"Bathroom breaks are for emergencies only.",textEs:"Ir al baño es solo para emergencias."}
+];
+// Picture for each material, matched by keyword (first match wins).
+var MATERIAL_ICONS=[["chromebook","💻"],["laptop","💻"],["notebook","📓"],["paper","📄"],["pencil","✏️"],["pen","🖊️"],["book","📖"],["novel","📖"],["headphone","🎧"],["earbud","🎧"],["highlight","🖍️"],["marker","🖍️"],["folder","📁"],["binder","📁"],["calculator","🧮"],["charger","🔌"],["scissors","✂️"],["glue","🧴"],["sticky","🗒️"],["water","💧"]];
+
 // Annotation Key. The Sheet's "Annotations" tab (columns symbol, label, labelEs, meaning, meaningEs) replaces these.
 var ANNOTATIONS_DEFAULT=[
   {symbol:"?",label:"Question",labelEs:"Pregunta",meaning:"I have a question about this.",meaningEs:"Tengo una pregunta sobre esto."},

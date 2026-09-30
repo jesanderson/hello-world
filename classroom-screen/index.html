@@ -44,12 +44,12 @@ i{font-style:italic}
 .ch-i b{color:var(--gold)}.ch-i i{color:var(--tan);font-weight:500}
 .ch-x{padding:0 16px;color:var(--tan)}
 @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.sb{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:16px;flex:1;min-height:0}
+.sb{display:grid;grid-template-columns:repeat(8,1fr);grid-auto-rows:1fr;gap:12px;flex:1;min-height:0}
 .sb-b{background:var(--cream);border:4px solid var(--stone);border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
 .sb-b:active{background:var(--gold);border-color:var(--gold)}
-.sb-ic{font-size:64px;line-height:1}
-.sb-en{font-size:26px;line-height:1.1;font-weight:800;color:var(--maroon)}
-.sb-b i{font-size:20px;color:var(--slate)}
+.sb-ic{font-size:52px;line-height:1}
+.sb-en{font-size:22px;line-height:1.1;font-weight:800;color:var(--maroon)}
+.sb-b i{font-size:17px;color:var(--slate)}
 .an-row{font-size:30px;font-weight:800;color:var(--maroon);letter-spacing:.08em;line-height:1.2}
 .an{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:18px;flex:1;min-height:0}
 .an-c{display:flex;align-items:center;gap:26px;background:var(--cream);border-radius:20px;border-left:10px solid var(--gold);padding:10px 26px;min-height:0;overflow:hidden}
@@ -58,6 +58,33 @@ i{font-style:italic}
 .an-l i{font-size:26px;font-weight:500;color:var(--slate)}
 .an-m{font-size:32px;font-weight:700;line-height:1.2}
 .an-t .es{font-size:26px}
+#entry{display:none}
+body.entry{overflow:auto;background:var(--bg)}
+body.entry #board{display:none}
+body.entry #entry{display:block;min-height:100vh}
+.e-wrap{box-sizing:border-box;min-height:100vh;padding:clamp(12px,2vw,28px);display:flex;flex-direction:column;gap:clamp(10px,1.6vw,20px)}
+.e-h{background:var(--maroon);color:#fff;border-radius:20px;border-bottom:6px solid var(--gold);padding:clamp(12px,2vw,24px) clamp(16px,2.6vw,32px);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.e-cls{font-size:clamp(14px,1.8vw,22px);color:var(--tan)}
+.e-wel{font-size:clamp(26px,4.2vw,54px);font-weight:800;line-height:1.1}
+.e-wel i{display:block;font-size:.55em;font-weight:500;color:var(--tan)}
+.e-when{text-align:right;font-size:clamp(14px,1.8vw,22px);color:var(--tan)}
+#eTime{font-size:clamp(28px,4.2vw,54px);font-weight:800;color:#fff;line-height:1.1}
+.e-grid{flex:1;display:grid;grid-template-columns:1fr;gap:clamp(10px,1.6vw,20px)}
+@media (min-aspect-ratio:1/1){.e-grid{grid-template-columns:1.15fr 1fr;grid-template-rows:auto 1fr}.e-rt{grid-row:span 2}}
+.e-card{--fs:clamp(18px,2.3vw,32px);background:#fff;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 3px 12px rgba(32,37,43,.08);min-height:0}
+.e-ch{background:var(--maroon);color:#fff;border-bottom:5px solid var(--gold);padding:10px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer}
+.e-t{font-size:clamp(20px,2.6vw,34px);font-weight:800}
+.e-t i{font-weight:500;font-size:.7em;color:var(--tan)}
+.e-x{font-size:clamp(24px,3vw,36px);color:var(--gold);font-weight:800;min-width:44px;text-align:center}
+.e-list{padding:clamp(10px,1.4vw,18px);display:flex;flex-direction:column;gap:.45em;font-size:var(--fs);flex:1}
+.e-item{display:flex;align-items:center;gap:.6em;background:var(--cream);border-radius:16px;padding:.45em .7em}
+.e-ic{font-size:1.7em;line-height:1;flex:0 0 1.9em;text-align:center;white-space:nowrap}
+.e-item b{display:block;font-weight:800;line-height:1.2}
+.e-item i{display:block;color:var(--slate);font-size:.78em;line-height:1.25}
+.e-st iframe{flex:1;border:0;width:100%;min-height:42vh;background:var(--cream)}
+.e-card.e-max{position:fixed;inset:0;z-index:50;border-radius:0;--fs:clamp(24px,3.8vw,58px)}
+.e-card.e-max .e-list{justify-content:center}
+.e-card.e-max iframe{min-height:0}
 .rv{flex:1;overflow:hidden;min-height:0}
 .rv-track{list-style:none;margin:0;padding:0;animation:roll linear infinite}
 .rv-track li{font-size:52px;line-height:1.25;padding:18px 0;border-bottom:2px solid var(--stone)}
@@ -226,6 +253,7 @@ i{font-style:italic}
 </style>
 </head>
 <body>
+<div id="entry"></div>
 <div id="board" aria-label="Classroom screen">
   <aside id="side"></aside>
   <main id="main"><div id="mainBody"></div><div id="chyron" data-act="open:rules" role="button" aria-label="Rules and Routines"></div></main>
