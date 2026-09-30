@@ -423,7 +423,7 @@ function tilePreview(id,d){
   else if(id==="grammar")p=d.grammar;
   else if(id==="exit")p=d.exitQuestion;
   else if(id==="annotate")return '<span class="an-row">'+annList().map(function(a){return esc(a.symbol);}).join(" ")+'</span>';
-  else if(id==="seating")return 'Tap to open <i>/ Toca para abrir</i>';
+  else if(id==="seating")return '24 desks · '+esc(seatSection())+' <i>/ 24 escritorios</i>';
   return p?esc(p):soon();
 }
 function soundTile(){
@@ -478,27 +478,81 @@ function mainHTML(now,d,n){
 }
 var VIEW=(new URLSearchParams(location.search).get("view")||"").toLowerCase(),ENTRY=VIEW==="entry"||VIEW==="hallway";
 function entryList(){return (st.entryCache&&st.entryCache.length)?st.entryCache:ENTRY_DEFAULT;}
-function matIcon(m){var s=m.toLowerCase();for(var i=0;i<MATERIAL_ICONS.length;i++){if(s.indexOf(MATERIAL_ICONS[i][0])>-1)return MATERIAL_ICONS[i][1];}return "📌";}
+function matIcon(m){var s=m.toLowerCase();for(var i=0;i<MATERIAL_ICONS.length;i++){if(new RegExp("(^|[^a-z])"+MATERIAL_ICONS[i][0]).test(s))return MATERIAL_ICONS[i][1];}return "📌";}
 var entryKey="",entryMax="";
 function eItem(ic,en,es){return '<div class="e-item"><span class="e-ic">'+esc(ic)+'</span><div><b>'+esc(en)+'</b>'+(es?'<i>'+esc(es)+'</i>':"")+'</div></div>';}
-function eCard(id,cls,t,te,body){
-  return '<section class="e-card '+cls+(entryMax===id?" e-max":"")+'"><header class="e-ch" data-act="emax:'+id+'"><span class="e-t">'+t+' <i>'+te+'</i></span><span class="e-x">'+(entryMax===id?"✕":"⤢")+'</span></header>'+body+'</section>';
+function eCard(id,cls,t,te,body,editable){
+  return '<section class="e-card '+cls+(entryMax===id?" e-max":"")+'"><header class="e-ch"><span class="e-t" data-act="emax:'+id+'">'+t+' <i>'+te+'</i></span>'+
+    (editable?'<button class="e-edit" data-act="epick:'+id+'">✎ Choose</button>':"")+'<button class="e-x" data-act="emax:'+id+'" aria-label="Full screen">'+(entryMax===id?"✕":"⤢")+'</button></header>'+body+'</section>';
 }
+// ----- daily picks for the hallway checklist (this device only, resets each day) -----
+var entryPick="";
+function uniqBy(list){var seen={},out=[];list.forEach(function(x){var k=x.text.toLowerCase();if(!seen[k]){seen[k]=1;out.push(x);}});return out;}
+function matsDefault(d){
+  var en=String(d.materials||"").split(",").map(function(x){return x.trim();}).filter(Boolean),es=String(d.materialsEs||"").split(",").map(function(x){return x.trim();});
+  return en.map(function(m,i){return {text:m,textEs:es[i]||""};});
+}
+function bankFor(kind,d){return uniqBy(kind==="rt"?entryList().concat(ROUTINE_BANK):matsDefault(d).concat(MATERIAL_BANK));}
+function picksFor(kind,d){
+  var sel=st.entrySel,bank=bankFor(kind,d);
+  if(sel&&sel.date===ymd(new Date())&&sel[kind]){return sel[kind].map(function(t){for(var i=0;i<bank.length;i++)if(bank[i].text===t)return bank[i];return null;}).filter(Boolean);}
+  return kind==="rt"?entryList():matsDefault(d);
+}
+function togglePick(kind,idx){
+  var d=getDay(currentDayN(new Date())),bank=bankFor(kind,d),cur=picksFor(kind,d).map(function(x){return x.text;}),t=bank[idx].text;
+  var i=cur.indexOf(t);if(i>-1)cur.splice(i,1);else{
+    var order=bank.map(function(x){return x.text;});cur.push(t);cur.sort(function(x,y){return order.indexOf(x)-order.indexOf(y);});}
+  var today=ymd(new Date());if(!st.entrySel||st.entrySel.date!==today)st.entrySel={date:today};
+  st.entrySel[kind]=cur;save();
+}
+function pickerHTML(kind,d){
+  var bank=bankFor(kind,d),cur=picksFor(kind,d).map(function(x){return x.text;});
+  return '<div class="pk-back"><div class="pk"><header class="pk-h"><span>'+(kind==="rt"?"When You Come In":"Materials to Have Ready")+' <i>Choose for today / Elige para hoy</i></span><button class="pk-done" data-act="epick:">Done</button></header>'+
+    '<div class="pk-list">'+bank.map(function(x,i){var on=cur.indexOf(x.text)>-1;return '<button class="pk-i'+(on?" on":"")+'" data-act="etog:'+kind+':'+i+'"><span class="pk-box">'+(on?"✓":"")+'</span><span class="e-ic">'+esc(kind==="rt"?(x.icon||"📌"):matIcon(x.text))+'</span><span><b>'+esc(x.text)+'</b>'+(x.textEs?'<i>'+esc(x.textEs)+'</i>':"")+'</span></button>';}).join("")+'</div>'+
+    '<footer class="pk-f"><button data-act="ereset:'+kind+'">Reset to today\'s default</button></footer></div></div>';
+}
+// ----- 24-desk seating chart (names stay on this device only) -----
+var seatMode="view",seatPick=-1,seatSecSel="",seatTab="desks";
+function seatSection(){
+  if(seatSecSel)return seatSecSel;
+  var now=new Date(),s=sectionInfo(now);if(s.sec)return s.sec.id;
+  var m=now.getHours()*60+now.getMinutes();for(var i=0;i<SECTIONS.length;i++)if(toMin(SECTIONS[i].start)>m)return SECTIONS[i].id;
+  return SECTIONS[0].id;
+}
+function seatNames(sec){var all=st.seats||{},a=(all[sec]||[]).slice();while(a.length<24)a.push("");return a;}
+function setSeatNames(sec,a){if(!st.seats)st.seats={};st.seats[sec]=a;save();}
+function deskHTML(i,names){return '<button class="desk'+(seatPick===i?" pick":"")+(names[i]?"":" empty")+'" data-act="desk:'+i+'"><span class="dn">'+(i+1)+'</span><span class="dname">'+esc(names[i]||"")+'</span></button>';}
+function seatGridHTML(){
+  var sec=seatSection(),names=seatNames(sec),lay=st.seatLayout||"groups",g="";
+  if(lay==="groups"){for(var p=0;p<6;p++){g+='<div class="pod">';for(var k=0;k<4;k++)g+=deskHTML(p*4+k,names);g+='</div>';}}
+  else{for(var i=0;i<24;i++)g+=deskHTML(i,names);}
+  var secs=SECTIONS.map(function(s){return '<button class="'+(s.id===sec?"on":"")+'" data-act="seatsec:'+s.id+'">'+s.id+'</button>';}).join("");
+  var modes=[["view","👀 View"],["move","↔ Swap"],["edit","✎ Names"]].map(function(m){return '<button class="'+(seatMode===m[0]?"on":"")+'" data-act="seatmode:'+m[0]+'">'+m[1]+'</button>';}).join("");
+  var tip=seatMode==="move"?"Tap two desks to swap them. / Toca dos escritorios para cambiarlos.":seatMode==="edit"?"Tap a desk to type a name. / Toca un escritorio para escribir un nombre.":"";
+  return '<div class="seat"><div class="seat-bar"><span class="seat-secs">'+secs+'</span><span class="seat-secs">'+modes+'</span>'+
+    '<span class="seat-secs"><button data-act="seatlay:'+(lay==="groups"?"rows":"groups")+'">'+(lay==="groups"?"▦ Rows":"▣ Groups")+'</button>'+(seatMode==="edit"?'<button data-act="seatpaste">Paste list</button><button data-act="seatclear">Clear</button>':"")+'</span></div>'+
+    (tip?'<div class="seat-tip">'+tip+'</div>':"")+
+    '<div class="seat-front">Front of room / Frente del salón</div><div class="seat-grid '+lay+'">'+g+'</div></div>';
+}
+function deskTap(i){
+  var sec=seatSection(),a=seatNames(sec);
+  if(seatMode==="move"){if(seatPick<0){seatPick=i;}else{var t=a[seatPick];a[seatPick]=a[i];a[i]=t;setSeatNames(sec,a);seatPick=-1;}}
+  else if(seatMode==="edit"){var v=prompt("Name for desk "+(i+1)+" (first name and last initial)",a[i]||"");if(v!==null){a[i]=v.trim();setSeatNames(sec,a);}}
+}
+function refreshSeats(){if(ENTRY){entryKey="";render();}else renderOv();}
 function renderEntry(){
   var now=new Date(),n=currentDayN(now),d=getDay(n);
   var t=$("#eTime");if(t)t.textContent=now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
-  var mats=String(d.materials||"").split(",").map(function(x){return x.trim();}).filter(Boolean);
-  var matsEs=String(d.materialsEs||"").split(",").map(function(x){return x.trim();});
-  var k=JSON.stringify([n,d.date,mats,matsEs,entryList(),entryMax,seatUrl(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
-  var u=seatUrl();
+  var rts=picksFor("rt",d),mats=picksFor("mt",d);
+  var k=JSON.stringify([n,d.date,rts,mats,entryMax,entryPick,st.seats,st.seatLayout,seatMode,seatPick,seatSection(),now.toDateString()]);if(k===entryKey)return;entryKey=k;
   $("#entry").innerHTML='<div class="e-wrap">'+
     '<header class="e-h"><div><div class="e-cls">'+esc(CLASS_INFO.subject)+' · '+esc(CLASS_INFO.teacher)+' · '+esc(CLASS_INFO.room)+'</div><div class="e-wel">Welcome, Eagles! 🦅<i>¡Bienvenidos, Águilas!</i></div></div>'+
     '<div class="e-when"><div id="eTime">'+now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+'</div><div>'+now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})+' · Day '+n+'</div></div></header>'+
     '<div class="e-grid">'+
-      eCard("rt","e-rt","Before you come in","Antes de entrar",'<div class="e-list">'+entryList().map(function(x){return eItem(x.icon,x.text,x.textEs);}).join("")+'</div>')+
-      eCard("mt","e-mt","Bring today","Trae hoy",'<div class="e-list">'+(mats.length?mats.map(function(m,i){return eItem(matIcon(m),m,matsEs[i]);}).join(""):eItem("📌","Nothing extra today","Nada extra hoy"))+'</div>')+
-      eCard("st","e-st","Seating chart","Mapa de asientos",u?'<iframe src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="e-list">'+eItem("🪑","Seating chart coming soon","Mapa de asientos próximamente")+'</div>')+
-    '</div></div>';
+      eCard("rt","e-rt","When You Come In","Al llegar",'<div class="e-list">'+(rts.length?rts.map(function(x){return eItem(x.icon||"📌",x.text,x.textEs);}).join(""):eItem("📌","Nothing chosen yet","Nada elegido todavía"))+'</div>',true)+
+      eCard("mt","e-mt","Materials to Have Ready","Materiales listos",'<div class="e-list">'+(mats.length?mats.map(function(m){return eItem(matIcon(m.text),m.text,m.textEs);}).join(""):eItem("📌","Nothing extra today","Nada extra hoy"))+'</div>',true)+
+      eCard("st","e-st","Seating Chart","Mapa de asientos",seatGridHTML())+
+    '</div></div>'+(entryPick?pickerHTML(entryPick,d):"");
 }
 function render(){
   if(ENTRY){renderEntry();return;}
@@ -617,7 +671,8 @@ function ovBody(id,d,now){
       (d.grammarAnswer?'<button class="btn" data-act="gramshow">'+(gramShow?"Hide answer":"Show answer")+' <i>/ '+(gramShow?"Ocultar respuesta":"Mostrar respuesta")+'</i></button>':"");
     case "exit":return '<div class="fit" data-max="72">'+bi(d.exitQuestion,d.exitQuestionEs)+'</div><div class="submit">Submit in Google Classroom <i>/ Entrégalo en Google Classroom</i></div>';
     case "video":var vu=videoUrl(d),id=ytId(vu);return id?'<iframe class="seat-frame" src="https://www.youtube-nocookie.com/embed/'+id+'?rel=0&modestbranding=1&playsinline=1" title="Video" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>':(vu?'<div class="vd-empty">This link is not a YouTube video. Use Open in new tab.</div>':'<div class="vd-empty">Add a YouTube link in Settings.</div>');
-    case "seating":var u=seatUrl();return u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>';
+    case "seating":var u=seatUrl();return '<div class="seat-tabs"><button class="'+(seatTab==="desks"?"on":"")+'" data-act="seattab:desks">🪑 24 desks</button><button class="'+(seatTab==="slides"?"on":"")+'" data-act="seattab:slides">Google Slides chart</button></div>'+
+      (seatTab==="desks"?seatGridHTML():(u?'<iframe class="seat-frame" src="'+esc(seatEmbed(u))+'" title="Seating chart" allowfullscreen></iframe>':'<div class="vd-empty">Add the seating chart link in Settings.</div>'));
     case "timer":return timerHTML(true);
     case "sounds":return '<div class="sb">'+BOARD.map(function(b){return '<button class="sb-b" data-act="snd:'+b[0]+'"><span class="sb-ic">'+b[3]+'</span><span class="sb-en">'+esc(b[1])+'</span><i>'+esc(b[2])+'</i></button>';}).join("")+'</div>';
     case "annotate":return '<div class="an">'+annList().map(function(a){return '<div class="an-c"><div class="an-s">'+esc(a.symbol)+'</div><div class="an-t"><div class="an-l">'+esc(a.label)+(a.labelEs?' <i>/ '+esc(a.labelEs)+'</i>':"")+'</div><div class="an-m">'+esc(a.meaning)+'</div>'+(a.meaningEs?'<div class="es">'+esc(a.meaningEs)+'</div>':"")+'</div></div>';}).join("")+'</div>';
@@ -674,6 +729,17 @@ function act(a,el,e){
     case "sheetsave":st.sheetUrl=$("#sheetIn").value.trim();save();loadSheet();return;
     case "sheetreload":loadSheet();loadRules();loadAnnotations();loadEntry();return;
     case "emax":entryMax=entryMax===p[1]?"":p[1];entryKey="";render();return;
+    case "epick":entryPick=p[1]||"";entryKey="";render();return;
+    case "etog":togglePick(p[1],+p[2]);entryKey="";render();return;
+    case "ereset":if(st.entrySel)delete st.entrySel[p[1]];save();entryKey="";render();return;
+    case "seatsec":seatSecSel=p[1];seatPick=-1;refreshSeats();return;
+    case "seatmode":seatMode=p[1];seatPick=-1;refreshSeats();return;
+    case "seatlay":st.seatLayout=p[1];save();refreshSeats();return;
+    case "seattab":seatTab=p[1];refreshSeats();return;
+    case "desk":deskTap(+p[1]);refreshSeats();return;
+    case "seatpaste":var lst=prompt("Paste names in desk order, separated by commas (first name and last initial)","");
+      if(lst){var nm=lst.split(/[,\n]/).map(function(x){return x.trim();});var a2=seatNames(seatSection());for(var q=0;q<24;q++)if(nm[q]!==undefined)a2[q]=nm[q];setSeatNames(seatSection(),a2);}refreshSeats();return;
+    case "seatclear":if(confirm("Clear all names for "+seatSection()+"?")){setSeatNames(seatSection(),[]);}refreshSeats();return;
     case "vidsave":st.videoUrl=$("#vidIn").value.trim();save();renderOv();return;
     case "seatsave":st.seatingUrl=$("#seatIn").value.trim();save();renderOv();return;
     case "fullscreen":var r=document.documentElement;(r.requestFullscreen||r.webkitRequestFullscreen||function(){}).call(r);return;
