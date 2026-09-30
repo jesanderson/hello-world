@@ -23,6 +23,26 @@ var ENTRY_DEFAULT=[
   {icon:"🪑",text:"Once you sit down, stay seated unless you are told to get up.",textEs:"Cuando te sientes, quédate en tu lugar a menos que te indiquen que te levantes."},
   {icon:"🚻",text:"Bathroom breaks are for emergencies only.",textEs:"Ir al baño es solo para emergencias."}
 ];
+// Bellringer menu for the Do Now. The Sheet's "Bellringers" tab (category, prompt, promptEs) replaces these.
+var BELL_DEFAULT=[
+  {category:"Quick write",prompt:"Write about a time someone helped you. What did they do?",promptEs:"Escribe sobre una vez que alguien te ayudó. ¿Qué hizo?"},
+  {category:"Quick write",prompt:"Who is someone you look up to? Why?",promptEs:"¿A quién admiras? ¿Por qué?"},
+  {category:"Quick write",prompt:"Describe a friend using three adjectives. Explain one of them.",promptEs:"Describe a un amigo con tres adjetivos. Explica uno de ellos."},
+  {category:"Quick write",prompt:"Would you rather have one best friend or many good friends? Why?",promptEs:"¿Prefieres tener un mejor amigo o muchos buenos amigos? ¿Por qué?"},
+  {category:"Reading",prompt:"Write one question you have about yesterday's reading.",promptEs:"Escribe una pregunta que tengas sobre la lectura de ayer."},
+  {category:"Reading",prompt:"Summarize yesterday's reading in two sentences.",promptEs:"Resume la lectura de ayer en dos oraciones."},
+  {category:"Reading",prompt:"Predict what will happen next in the story. Use the word because.",promptEs:"Predice qué pasará después en la historia. Usa la palabra porque."},
+  {category:"Reading",prompt:"Pick a character. How do they feel right now? What in the text shows it?",promptEs:"Escoge un personaje. ¿Cómo se siente ahora? ¿Qué parte del texto lo muestra?"},
+  {category:"Vocabulary",prompt:"Use two word bank words in one sentence.",promptEs:"Usa dos palabras del banco de palabras en una oración."},
+  {category:"Vocabulary",prompt:"Pick a word bank word. Draw it and write what it means.",promptEs:"Escoge una palabra del banco de palabras. Dibújala y escribe qué significa."},
+  {category:"Grammar",prompt:"Fix the sentence: me and him went to the store yesterday",promptEs:"Corrige la oración en inglés: me and him went to the store yesterday"},
+  {category:"Grammar",prompt:"Combine into one sentence: Sal was sad. She missed her mom.",promptEs:"Combina en una oración en inglés: Sal was sad. She missed her mom."},
+  {category:"Opinion",prompt:"Agree or disagree: Friends are more important than family. Give one reason.",promptEs:"¿De acuerdo o no? Los amigos son más importantes que la familia. Da una razón."},
+  {category:"Opinion",prompt:"Agree or disagree: Middle school is harder than elementary school. Why?",promptEs:"¿De acuerdo o no? La secundaria es más difícil que la primaria. ¿Por qué?"},
+  {category:"Check-in",prompt:"How are you feeling today, from 1 to 5? What is one thing that would help?",promptEs:"¿Cómo te sientes hoy, del 1 al 5? ¿Qué te ayudaría?"},
+  {category:"Check-in",prompt:"Write one goal for today's class.",promptEs:"Escribe una meta para la clase de hoy."}
+];
+
 // Extra options you can pick from for "When You Come In" (the Sheet's Hallway tab or ENTRY_DEFAULT stay the daily default).
 var ROUTINE_BANK=[
   {icon:"🤫",text:"Line up quietly and wait to be invited in.",textEs:"Haz fila en silencio y espera a que te invitemos a entrar."},
@@ -40,20 +60,34 @@ var ROUTINE_BANK=[
 ];
 // Options for "Materials to Have Ready". Today's materials from the Sheet stay the daily default.
 var MATERIAL_BANK=[
-  {text:"Notebook or any paper",textEs:"Cuaderno o cualquier papel"},
+  {text:"Notebook",textEs:"Cuaderno"},
+  {text:"Paper",textEs:"Papel"},
   {text:"Pencil",textEs:"Lápiz"},
-  {text:"Chromebook for Google Classroom",textEs:"Chromebook para Google Classroom"},
-  {text:"Charged Chromebook",textEs:"Chromebook con carga"},
-  {text:"Headphones or earbuds",textEs:"Audífonos"},
-  {text:"Independent reading book",textEs:"Libro de lectura independiente"},
-  {text:"Walk Two Moons packet",textEs:"Paquete de Walk Two Moons"},
-  {text:"Highlighter",textEs:"Marcador resaltador"},
-  {text:"Sticky notes",textEs:"Notas adhesivas"},
+  {text:"Pen",textEs:"Pluma"},
+  {text:"Chromebook",textEs:"Chromebook"},
+  {text:"Charger",textEs:"Cargador"},
+  {text:"Headphones",textEs:"Audífonos"},
+  {text:"Book",textEs:"Libro"},
+  {text:"Handout",textEs:"Hoja de trabajo"},
   {text:"Folder",textEs:"Carpeta"},
+  {text:"Highlighter",textEs:"Resaltador"},
+  {text:"Markers",textEs:"Marcadores"},
   {text:"Colored pencils",textEs:"Lápices de colores"},
-  {text:"Glue stick",textEs:"Pegamento en barra"},
-  {text:"Scissors",textEs:"Tijeras"},
-  {text:"Pen",textEs:"Pluma"}
+  {text:"Sticky notes",textEs:"Notas adhesivas"},
+  {text:"Glue stick",textEs:"Pegamento"},
+  {text:"Scissors",textEs:"Tijeras"}
+];
+
+// Class jobs. Edit, add, and shuffle them from the Seating Chart's Class Jobs tab (saved on the device).
+var JOBS_DEFAULT=[
+  {id:"door",icon:"🚪",name:"Door Manager",nameEs:"Encargado de la puerta",desc:"Sits by the door and opens it when someone knocks.",descEs:"Se sienta junto a la puerta y la abre cuando alguien toca.",slots:1,door:true},
+  {id:"lead",icon:"🚶",name:"Line Leader",nameEs:"Líder de la fila",desc:"Makes sure nobody crowds the door or goes into the hallway.",descEs:"Se asegura de que nadie se amontone en la puerta ni salga al pasillo.",slots:1},
+  {id:"leadast",icon:"👣",name:"Line Leader Assistant",nameEs:"Asistente del líder de la fila",desc:"Helps everyone form a single-file line.",descEs:"Ayuda a todos a formar una fila de uno en uno.",slots:1},
+  {id:"linestaff",icon:"🤫",name:"Line Staff",nameEs:"Equipo de la fila",desc:"Helps keep the line quiet so we can leave on time.",descEs:"Ayuda a mantener la fila en silencio para salir a tiempo.",slots:1},
+  {id:"ta",icon:"🍎",name:"Teacher Assistant",nameEs:"Asistente docente",desc:"Helps pass out and collect materials.",descEs:"Ayuda a repartir y recoger materiales.",slots:2},
+  {id:"lib",icon:"📚",name:"Librarian",nameEs:"Encargado de la biblioteca",desc:"Keeps the class library neat and books put away.",descEs:"Mantiene ordenada la biblioteca del salón y guarda los libros.",slots:1},
+  {id:"cust",icon:"🧹",name:"Custodians",nameEs:"Conserjes",desc:"Make sure trash is picked up off the floor.",descEs:"Se aseguran de recoger la basura del piso.",slots:2},
+  {id:"design",icon:"🎨",name:"Interior Design Team",nameEs:"Equipo de diseño",desc:"Make sure the room looks nice.",descEs:"Se aseguran de que el salón se vea bonito.",slots:2}
 ];
 
 // Picture for each material, matched by keyword (first match wins).
@@ -109,8 +143,8 @@ var DAY_DEFAULTS={
   doNow:"",doNowEs:"",doNowWhere:"notebook or any paper",doNowWhereEs:"cuaderno o cualquier papel",doNowMins:5,
   learningTarget:"",learningTargetEs:"",clo:"",cloEs:"",
   activity:"",activityEs:"",
-  materials:"Notebook or any paper, Pencil, Chromebook for Google Classroom",
-  materialsEs:"Cuaderno o cualquier papel, Lápiz, Chromebook para Google Classroom",
+  materials:"Notebook, Pencil, Chromebook",
+  materialsEs:"Cuaderno, Lápiz, Chromebook",
   criteriaMet:"What a finished, correct answer looks like",criteriaMetEs:"Cómo se ve una respuesta completa y correcta",
   criteriaApproaching:"Part of the task done correctly",criteriaApproachingEs:"Una parte de la tarea hecha correctamente",
   criteriaNotYet:"Not started, one piece only, or copied",criteriaNotYetEs:"Sin empezar, solo una parte, o copiado",
