@@ -416,7 +416,7 @@ var MAX={donow:42,agenda:34,target:36,clo:32,standards:26};
 function card(id,t,te,body,cls,right){
   return '<section class="card '+cls+'" data-act="open:'+id+'"><header class="card-h"><span class="h-t">'+t+'</span><span class="h-es">'+te+'</span><span class="h-sp"></span>'+(right||"")+'<span class="h-x" aria-hidden="true">⤢</span></header><div class="card-b fit" data-max="'+MAX[id]+'">'+body+'</div></section>';
 }
-var TILES=[["task","Today's Task","Tarea de hoy"],["annotate","Annotation Key","Clave de anotación"],["criteria","Success Criteria","Criterios de éxito"],["vocab","Vocabulary","Vocabulario"],["grammar","Grammar","Gramática"],["exit","Exit Ticket","Boleto de salida"],["seating","Seating Chart","Mapa de asientos"]];
+var TILES=[["task","Today's Task","Tarea de hoy"],["annotate","Annotation Key","Clave de anotación"],["criteria","Success Criteria","Criterios de éxito"],["vocab","Vocabulary","Vocabulario"],["grammar","Grammar","Gramática"],["exit","Exit Ticket","Boleto de salida"],["seating","Seating Chart","Mapa de asientos"],["quill","Quill Leaders","Líderes de Quill"]];
 function tilePreview(id,d){
   var p="";
   if(id==="task")p=d.activity;
@@ -425,8 +425,40 @@ function tilePreview(id,d){
   else if(id==="grammar")p=d.grammar;
   else if(id==="exit")p=d.exitQuestion;
   else if(id==="annotate")return '<span class="an-row">'+annList().map(function(a){return esc(a.symbol);}).join(" ")+'</span>';
+  else if(id==="quill")return quillPreview();
   else if(id==="seating")return 'Desks & class jobs · '+esc(seatSection())+' <i>/ Asientos y trabajos</i>';
   return p?esc(p):soon();
+}
+// ----- Quill leaderboard (names stay on this device only) -----
+var quillEdit=false;
+function quillData(){var q=st.quill||{};return {done:q.done||{},kids:q.kids||[],date:q.date||""};}
+function quillPeriods(){var q=quillData();return SECTIONS.map(function(s){return {s:s,n:+q.done[s.id]||0};}).sort(function(a,b){return b.n-a.n;});}
+function quillTop(){return quillData().kids.slice().sort(function(a,b){return b.acc-a.acc;}).slice(0,10);}
+function quillPreview(){
+  var p=quillPeriods()[0],k=quillTop()[0];
+  if(!p.n&&!k)return 'Tap to add Quill scores <i>/ Toca para agregar</i>';
+  return (p.n?'🏆 '+esc(p.s.period.replace(/Period\s*/i,"P"))+' · '+p.n:"")+(k?'<br>⭐ '+esc(k.name.split(" ")[0])+' '+k.acc+'%':"");
+}
+function quillBody(){
+  var q=quillData();
+  if(quillEdit)return '<div class="ql-ed"><div class="ql-col"><div class="ql-h">Activities completed per class <i>/ Actividades completadas</i></div>'+
+    SECTIONS.map(function(s){return '<label class="ql-in"><span>'+esc(s.period)+' · '+esc(s.id)+'</span><input type="number" min="0" inputmode="numeric" id="qd_'+esc(s.id)+'" value="'+(q.done[s.id]||"")+'"></label>';}).join("")+'</div>'+
+    '<div class="ql-col"><div class="ql-h">Students and accuracy <i>/ Estudiantes y precisión</i></div><textarea id="qkIn" placeholder="One per line, like&#10;Maya R., 96&#10;Jordan T., 92">'+esc(q.kids.map(function(k){return k.name+", "+k.acc;}).join("\n"))+'</textarea>'+
+    '<div class="set-help">Name, then accuracy. You can paste two columns copied from a Quill report or spreadsheet. Names stay on this screen only and never go to the Sheet.</div></div></div>';
+  var per=quillPeriods(),max=Math.max(1,per[0].n),top=quillTop();
+  return '<div class="ql"><section class="ql-col"><div class="ql-h">Most Completed <i>/ Más completadas</i></div>'+
+    per.map(function(x,i){return '<div class="ql-p'+(i===0&&x.n?" ql-1":"")+'"><span class="ql-r">'+(i+1)+'</span><span class="ql-pn">'+esc(x.s.period)+'</span><span class="ql-bar"><b style="width:'+Math.round(x.n/max*100)+'%"></b></span><span class="ql-n">'+x.n+'</span></div>';}).join("")+'</section>'+
+    '<section class="ql-col"><div class="ql-h">Top 10 Accuracy <i>/ Mejor precisión</i></div>'+
+    (top.length?'<ol class="ql-k">'+top.map(function(k,i){return '<li'+(i<3?' class="ql-m"':"")+'><span class="ql-r">'+(["🥇","🥈","🥉"][i]||(i+1))+'</span><span class="ql-kn">'+esc(k.name)+'</span><span class="ql-n">'+k.acc+'%</span></li>';}).join("")+'</ol>':'<div class="vd-empty">Tap ✎ Update to add students.</div>')+'</section></div>'+
+    (q.date?'<div class="ql-date">Updated '+esc(fmtDt(q.date))+'</div>':"");
+}
+function quillSave(){
+  var done={};SECTIONS.forEach(function(s){var v=parseInt(($("#qd_"+s.id)||{}).value,10);if(v>0)done[s.id]=v;});
+  var kids=[];String(($("#qkIn")||{}).value||"").split(/\n/).forEach(function(line){
+    var m=line.match(/^\s*(.+?)[\s,\t]+(\d{1,3}(?:\.\d+)?)\s*%?\s*$/);
+    if(m){var a=Math.min(100,Math.round(parseFloat(m[2])));kids.push({name:m[1].replace(/[,\t]+$/,"").trim(),acc:a});}
+  });
+  st.quill={done:done,kids:kids,date:ymd(new Date())};save();quillEdit=false;render();renderOv();
 }
 function soundTile(){
   return '<div class="tile t-sounds" data-act="open:sounds"><div class="tile-h"><span class="tile-t">Sounds</span><span class="h-x" aria-hidden="true">⤢</span></div><div class="tile-es">Sonidos</div>'+
@@ -700,7 +732,7 @@ function loadRules(){
 var OV=null,vocabOpen=null,gramShow=false;
 var OVT={donow:["Do Now","Para empezar"],agenda:["Agenda","Agenda"],target:["Learning Target","Meta de aprendizaje"],clo:["Language Objective","Objetivo de lenguaje"],standards:["Standards","Estándares"],
   task:["Today's Task","Tarea de hoy"],criteria:["Success Criteria","Criterios de éxito"],vocab:["Vocabulary","Vocabulario"],grammar:["Grammar","Gramática"],exit:["Exit Ticket","Boleto de salida"],
-  seating:["Seating Chart","Mapa de asientos"],sounds:["Sounds","Sonidos"],bell:["Bellringers","Actividades de inicio"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
+  seating:["Seating Chart","Mapa de asientos"],quill:["Quill Leaderboard","Tabla de líderes de Quill"],sounds:["Sounds","Sonidos"],bell:["Bellringers","Actividades de inicio"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
 function seatEmbed(u){
   var m=u.match(/docs\.google\.com\/presentation\/d\/([^\/?#]+)/);
   return m?"https://docs.google.com/presentation/d/"+m[1]+"/embed?start=false&loop=false&delayms=600000":u;
@@ -712,6 +744,7 @@ function ovRight(id,d){
     return (s?'<a class="ov-link" href="'+esc(s)+'" target="_blank" rel="noopener">Slides</a>':"")+(p?'<a class="ov-link" href="'+esc(p)+'" target="_blank" rel="noopener">Lesson plan</a>':"");
   }
   if(id==="sounds")return '<button class="ov-link" data-act="sndstop">■ Stop</button>';
+  if(id==="quill")return quillEdit?'<button class="ov-link" data-act="qsave">Save</button><button class="ov-link" data-act="qedit">Cancel</button>':'<button class="ov-link" data-act="qedit">✎ Update</button>';
   if(id==="video"&&videoUrl(d))return '<a class="ov-link" href="'+esc(videoUrl(d))+'" target="_blank" rel="noopener">Open in YouTube</a>';
   if(id==="seating"&&seatUrl())return '<a class="ov-link" href="'+esc(seatUrl())+'" target="_blank" rel="noopener">Open in new tab</a>';
   return "";
@@ -769,6 +802,7 @@ function ovBody(id,d,now){
     case "annotate":return '<div class="an">'+annList().map(function(a){return '<div class="an-c"><div class="an-s">'+esc(a.symbol)+'</div><div class="an-t"><div class="an-l">'+esc(a.label)+(a.labelEs?' <i>/ '+esc(a.labelEs)+'</i>':"")+'</div><div class="an-m">'+esc(a.meaning)+'</div>'+(a.meaningEs?'<div class="es">'+esc(a.meaningEs)+'</div>':"")+'</div></div>';}).join("")+'</div>';
     case "rules":var r=rulesList(),li=r.map(function(x,i){return '<li><b>'+(i+1)+'.</b> <span class="en">'+esc(x.rule)+'</span>'+(x.ruleEs?'<div class="es">'+esc(x.ruleEs)+'</div>':"")+'</li>';}).join("");
       return '<div class="rv"><ul class="rv-track" style="animation-duration:'+Math.max(20,r.length*5)+'s">'+li+li+'</ul></div>';
+    case "quill":return quillBody();
     case "settings":return settingsBody(now);
   }
   return "";
@@ -783,7 +817,7 @@ function renderOv(){
     '<div class="ov-b">'+ovBody(OV,d,now)+'</div></div></div>';
   fitAll(el);
 }
-function openOv(id){OV=id;vocabOpen=null;gramShow=false;renderOv();}
+function openOv(id){OV=id;quillEdit=false;vocabOpen=null;gramShow=false;renderOv();}
 function closeOv(){OV=null;renderOv();}
 
 // ---------- taps ----------
@@ -795,6 +829,8 @@ function act(a,el,e){
     case "backdrop":if(e.target===el)closeOv();return;
     case "close":closeOv();return;
     case "open":openOv(p[1]);return;
+    case "qedit":quillEdit=!quillEdit;renderOv();return;
+    case "qsave":quillSave();return;
     case "cares":st.cares=CARES[(CARES.indexOf(st.cares)+1)%CARES.length];save();render();return;
     case "voice":st.voice=+p[1];save();render();return;
     case "tpreset":tSet(+p[1]*60);return;
