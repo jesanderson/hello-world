@@ -412,11 +412,12 @@ function critBody(d){
 }
 
 // ---------- layout ----------
-var MAX={donow:42,agenda:34,target:36,clo:32,standards:26};
+var MAX={donow:42,agenda:34,target:36,clo:32,quill:30};
 function card(id,t,te,body,cls,right){
   return '<section class="card '+cls+'" data-act="open:'+id+'"><header class="card-h"><span class="h-t">'+t+'</span><span class="h-es">'+te+'</span><span class="h-sp"></span>'+(right||"")+'<span class="h-x" aria-hidden="true">⤢</span></header><div class="card-b fit" data-max="'+MAX[id]+'">'+body+'</div></section>';
 }
-var TILES=[["task","Today's Task","Tarea de hoy"],["annotate","Annotation Key","Clave de anotación"],["criteria","Success Criteria","Criterios de éxito"],["vocab","Vocabulary","Vocabulario"],["grammar","Grammar","Gramática"],["exit","Exit Ticket","Boleto de salida"],["seating","Seating Chart","Mapa de asientos"],["quill","Quill Leaders","Líderes de Quill"]];
+var TILES=[["task","Today's Task","Tarea de hoy"],["criteria","Success Criteria","Criterios de éxito"],["vocab","Vocabulary","Vocabulario"],["seating","Seating Chart","Mapa de asientos"],["more","More","Más"]];
+var MORE=[["exit","Exit Ticket","Boleto de salida","🎟️"],["annotate","Annotation Key","Clave de anotación","✏️"],["grammar","Grammar","Gramática","📝"],["standards","Standards","Estándares","📘"]];
 function tilePreview(id,d){
   var p="";
   if(id==="task")p=d.activity;
@@ -425,7 +426,8 @@ function tilePreview(id,d){
   else if(id==="grammar")p=d.grammar;
   else if(id==="exit")p=d.exitQuestion;
   else if(id==="annotate")return '<span class="an-row">'+annList().map(function(a){return esc(a.symbol);}).join(" ")+'</span>';
-  else if(id==="quill")return quillPreview();
+  else if(id==="standards")return stdItems(d).map(function(x){return esc(x.code);}).join(", ")||soon();
+  else if(id==="more")return MORE.map(function(m){return m[1];}).join(" · ");
   else if(id==="seating")return 'Desks & class jobs · '+esc(seatSection())+' <i>/ Asientos y trabajos</i>';
   return p?esc(p):soon();
 }
@@ -438,6 +440,12 @@ function quillPreview(){
   var p=quillPeriods()[0],k=quillTop()[0];
   if(!p.n&&!k)return 'Tap to add Quill scores <i>/ Toca para agregar</i>';
   return (p.n?'🏆 '+esc(p.s.period.replace(/Period\s*/i,"P"))+' · '+p.n:"")+(k?'<br>⭐ '+esc(k.name.split(" ")[0])+' '+k.acc+'%':"");
+}
+function quillCardBody(){
+  var per=quillPeriods().filter(function(x){return x.n;}).slice(0,3),top=quillTop().slice(0,3);
+  if(!per.length&&!top.length)return '<div class="ph">Tap to add Quill scores / Toca para agregar puntajes de Quill</div>';
+  return '<div class="qc"><div><div class="qc-h">Most completed <i>/ Más completadas</i></div>'+per.map(function(x,i){return '<div class="qc-r'+(i?"":" qc-1")+'"><span>'+(i+1)+'. '+esc(x.s.period)+'</span><b>'+x.n+'</b></div>';}).join("")+'</div>'+
+    '<div><div class="qc-h">Top accuracy <i>/ Mejor precisión</i></div>'+top.map(function(k,i){return '<div class="qc-r'+(i?"":" qc-1")+'"><span>'+["🥇","🥈","🥉"][i]+' '+esc(k.name)+'</span><b>'+k.acc+'%</b></div>';}).join("")+'</div></div>';
 }
 function quillBody(){
   var q=quillData();
@@ -509,7 +517,7 @@ function mainHTML(now,d,n){
     '</div><div class="col">'+
       card("target","Learning Target","Meta de aprendizaje",bi(d.learningTarget,d.learningTargetEs),"c-target")+
       card("clo","Language Objective","Objetivo de lenguaje",bi(d.clo,d.cloEs),"c-clo")+
-      card("standards","Standards","Estándares",stdBody(d),"c-std")+
+      card("quill","Quill Leaders","Líderes de Quill",quillCardBody(),"c-quill")+
     '</div></div>'+
     '<div class="tiles">'+tilesHTML(d)+'</div>'+
     '<div class="week">'+weekHTML(n)+'</div>';
@@ -732,7 +740,7 @@ function loadRules(){
 var OV=null,vocabOpen=null,gramShow=false;
 var OVT={donow:["Do Now","Para empezar"],agenda:["Agenda","Agenda"],target:["Learning Target","Meta de aprendizaje"],clo:["Language Objective","Objetivo de lenguaje"],standards:["Standards","Estándares"],
   task:["Today's Task","Tarea de hoy"],criteria:["Success Criteria","Criterios de éxito"],vocab:["Vocabulary","Vocabulario"],grammar:["Grammar","Gramática"],exit:["Exit Ticket","Boleto de salida"],
-  seating:["Seating Chart","Mapa de asientos"],quill:["Quill Leaderboard","Tabla de líderes de Quill"],sounds:["Sounds","Sonidos"],bell:["Bellringers","Actividades de inicio"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
+  seating:["Seating Chart","Mapa de asientos"],quill:["Quill Leaderboard","Tabla de líderes de Quill"],more:["More","Más"],sounds:["Sounds","Sonidos"],bell:["Bellringers","Actividades de inicio"],video:["Video","Video"],rules:["Rules & Routines","Reglas y rutinas"],annotate:["Annotation Key","Clave de anotación"],timer:["Timer","Temporizador"],settings:["Settings","Ajustes"]};
 function seatEmbed(u){
   var m=u.match(/docs\.google\.com\/presentation\/d\/([^\/?#]+)/);
   return m?"https://docs.google.com/presentation/d/"+m[1]+"/embed?start=false&loop=false&delayms=600000":u;
@@ -803,6 +811,7 @@ function ovBody(id,d,now){
     case "rules":var r=rulesList(),li=r.map(function(x,i){return '<li><b>'+(i+1)+'.</b> <span class="en">'+esc(x.rule)+'</span>'+(x.ruleEs?'<div class="es">'+esc(x.ruleEs)+'</div>':"")+'</li>';}).join("");
       return '<div class="rv"><ul class="rv-track" style="animation-duration:'+Math.max(20,r.length*5)+'s">'+li+li+'</ul></div>';
     case "quill":return quillBody();
+    case "more":return '<div class="mo">'+MORE.map(function(m){return '<button class="mo-b" data-act="open:'+m[0]+'"><span class="mo-ic">'+m[3]+'</span><span class="mo-t">'+m[1]+'</span><i>'+m[2]+'</i><span class="mo-p">'+tilePreview(m[0],getDay(currentDayN(new Date())))+'</span></button>';}).join("")+'</div>';
     case "settings":return settingsBody(now);
   }
   return "";
