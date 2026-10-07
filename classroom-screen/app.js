@@ -433,10 +433,13 @@ function tilePreview(id,d){
 }
 // ----- Quill leaderboard (names stay on this device only) -----
 var quillEdit=false;
-function quillFromSheet(){var q=st.quillSheet;return !!(q&&(q.kids.length||Object.keys(q.done).length));}
-function quillData(){var q=quillFromSheet()?st.quillSheet:(st.quill||{});return {done:q.done||{},kids:q.kids||[],date:q.date||""};}
+function quillFromSheet(){var q=st.quillSheet;return !!(q&&(q.kids.length||Object.keys(q.done).length||(q.subj||[]).length));}
+function quillData(){var q=quillFromSheet()?st.quillSheet:(st.quill||{});return {done:q.done||{},kids:q.kids||[],subj:q.subj||[],date:q.date||""};}
 function quillPeriods(){var q=quillData();return SECTIONS.map(function(s){return {s:s,n:+q.done[s.id]||0};}).sort(function(a,b){return b.n-a.n;});}
-function quillTop(){return quillData().kids.slice().sort(function(a,b){return b.acc-a.acc;}).slice(0,10);}
+function quillTop(){return quillData().kids.filter(function(k){return k.acc!=null;}).sort(function(a,b){return b.acc-a.acc;}).slice(0,10);}
+function quillVol(){return quillData().kids.filter(function(k){return k.n!=null;}).sort(function(a,b){return b.n-a.n;}).slice(0,10);}
+function quillSubj(){return quillData().subj.slice().sort(function(a,b){return b.n-a.n;});}
+function qlList(list,val){return '<ol class="ql-k">'+list.map(function(k,i){return '<li'+(i<3?' class="ql-m"':"")+'><span class="ql-r">'+(["🥇","🥈","🥉"][i]||(i+1))+'</span><span class="ql-kn">'+esc(k.name)+'</span><span class="ql-n">'+val(k)+'</span></li>';}).join("")+'</ol>';}
 function quillPreview(){
   var p=quillPeriods()[0],k=quillTop()[0];
   if(!p.n&&!k)return 'Tap to add Quill scores <i>/ Toca para agregar</i>';
@@ -452,20 +455,23 @@ function quillBody(){
   var q=quillData();
   if(quillEdit)return '<div class="ql-ed"><div class="ql-col"><div class="ql-h">Activities completed per class <i>/ Actividades completadas</i></div>'+
     SECTIONS.map(function(s){return '<label class="ql-in"><span>'+esc(s.period)+' · '+esc(s.id)+'</span><input type="number" min="0" inputmode="numeric" id="qd_'+esc(s.id)+'" value="'+(q.done[s.id]||"")+'"></label>';}).join("")+'</div>'+
-    '<div class="ql-col"><div class="ql-h">Students and accuracy <i>/ Estudiantes y precisión</i></div><textarea id="qkIn" placeholder="One per line, like&#10;Maya R., 96&#10;Jordan T., 92">'+esc(q.kids.map(function(k){return k.name+", "+k.acc;}).join("\n"))+'</textarea>'+
-    '<div class="set-help">Name, then accuracy. You can paste two columns copied from a Quill report or spreadsheet. Names stay on this screen only and never go to the Sheet.</div></div></div>';
-  var per=quillPeriods(),max=Math.max(1,per[0].n),top=quillTop();
-  return '<div class="ql"><section class="ql-col"><div class="ql-h">Most Completed <i>/ Más completadas</i></div>'+
+    '<div class="ql-col"><div class="ql-h">Students and accuracy <i>/ Estudiantes y precisión</i></div><textarea id="qkIn" placeholder="One per line, like&#10;Maya, 96, 14&#10;Jordan, 92, 9">'+esc(q.kids.map(function(k){return k.name+", "+k.acc+(k.n!=null?", "+k.n:"");}).join("\n"))+'</textarea>'+
+    '<div class="set-help">Name, accuracy, then activities completed. You can paste columns copied from a Quill report or spreadsheet. Names stay on this screen only and never go to the Sheet.</div></div></div>';
+  var per=quillPeriods(),max=Math.max(1,per[0].n),top=quillTop(),vol=quillVol(),sub=quillSubj(),smax=Math.max.apply(null,[1].concat(sub.map(function(x){return x.n;})));
+  var empty='<div class="vd-empty">Add students in the Quill tab of your Sheet.</div>';
+  return '<div class="ql"><div class="ql-stack"><section class="ql-col"><div class="ql-h">Most Completed <i>/ Más completadas</i></div>'+
     per.map(function(x,i){return '<div class="ql-p'+(i===0&&x.n?" ql-1":"")+'"><span class="ql-r">'+(i+1)+'</span><span class="ql-pn">'+esc(x.s.period)+'</span><span class="ql-bar"><b style="width:'+Math.round(x.n/max*100)+'%"></b></span><span class="ql-n">'+x.n+'</span></div>';}).join("")+'</section>'+
-    '<section class="ql-col"><div class="ql-h">Top 10 Accuracy <i>/ Mejor precisión</i></div>'+
-    (top.length?'<ol class="ql-k">'+top.map(function(k,i){return '<li'+(i<3?' class="ql-m"':"")+'><span class="ql-r">'+(["🥇","🥈","🥉"][i]||(i+1))+'</span><span class="ql-kn">'+esc(k.name)+'</span><span class="ql-n">'+k.acc+'%</span></li>';}).join("")+'</ol>':'<div class="vd-empty">Tap ✎ Update to add students.</div>')+'</section></div>'+
+    '<section class="ql-col"><div class="ql-h">By Subject <i>/ Por tema</i></div>'+
+    (sub.length?'<div class="ql-sub">'+sub.map(function(x){return '<div class="ql-s"><span class="ql-sn" title="'+esc(x.name)+'">'+esc(x.name)+'</span><span class="ql-bar"><b style="width:'+Math.max(2,Math.round(x.n/smax*100))+'%"></b></span><span class="ql-n">'+x.n+(x.acc!=null?'<i> · '+x.acc+'%</i>':"")+'</span></div>';}).join("")+'</div>':'<div class="vd-empty">Add subjects in the Quill tab of your Sheet.</div>')+'</section></div>'+
+    '<section class="ql-col"><div class="ql-h">Top 10 Accuracy <i>/ Mejor precisión</i></div>'+(top.length?qlList(top,function(k){return k.acc+"%";}):empty)+'</section>'+
+    '<section class="ql-col"><div class="ql-h">Top 10 Completed <i>/ Más actividades</i></div>'+(vol.length?qlList(vol,function(k){return k.n;}):empty)+'</section></div>'+
     (q.date?'<div class="ql-date">Updated '+esc(fmtDt(q.date))+'</div>':"");
 }
 function quillSave(){
   var done={};SECTIONS.forEach(function(s){var v=parseInt(($("#qd_"+s.id)||{}).value,10);if(v>0)done[s.id]=v;});
   var kids=[];String(($("#qkIn")||{}).value||"").split(/\n/).forEach(function(line){
-    var m=line.match(/^\s*(.+?)[\s,\t]+(\d{1,3}(?:\.\d+)?)\s*%?\s*$/);
-    if(m){var a=Math.min(100,Math.round(parseFloat(m[2])));kids.push({name:m[1].replace(/[,\t]+$/,"").trim(),acc:a});}
+    var m=line.match(/^\s*(.+?)[\s,\t]+(\d{1,3}(?:\.\d+)?)\s*%?(?:[\s,\t]+(\d+))?\s*$/);
+    if(m){var a=Math.min(100,Math.round(parseFloat(m[2])));kids.push({name:m[1].replace(/[,\t]+$/,"").trim(),acc:a,n:m[3]!=null?+m[3]:null});}
   });
   st.quill={done:done,kids:kids,date:ymd(new Date())};save();quillEdit=false;render();renderOv();
 }
@@ -725,7 +731,7 @@ function loadBells(){
     if(!out.length)throw 0;st.bellCache=out;save();
   }).catch(function(){});
 }
-// Quill tab: period | completed | (blank) | name | accuracy
+// Quill tab: period | completed | name | accuracy | activities | subject | subject completed | subject accuracy
 function sectionFor(v){
   var t=String(v||"").trim().toLowerCase(),n=(t.match(/\d+/)||[""])[0];if(!t)return null;
   for(var i=0;i<SECTIONS.length;i++){var s=SECTIONS[i];if(s.id===n||s.id.toLowerCase()===t||s.period.toLowerCase()===t||(n&&(s.period.match(/\d+/)||[""])[0]===n))return s;}
@@ -736,14 +742,18 @@ function loadQuill(){
   fetch(u+"&sheet=Quill",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
     if(/^\s*</.test(t))throw 0;
     var rows=parseCSV(t),head=(rows.shift()||[]).map(function(h){return h.trim().toLowerCase();});
-    var pi=head.indexOf("period"),ci=head.indexOf("completed"),ni=head.indexOf("name"),ai=head.indexOf("accuracy");if(pi<0&&ni<0)throw 0;
-    var done={},kids=[];
+    var H=function(n){return head.indexOf(n);},pi=H("period"),ci=H("completed"),ni=H("name"),ai=H("accuracy"),vi=H("activities"),si=H("subject"),sci=H("subject completed"),sai=H("subject accuracy");if(pi<0&&ni<0&&si<0)throw 0;
+    var pct=function(v){var a=parseFloat(String(v==null?"":v).replace("%",""));if(isNaN(a))return null;if(a>0&&a<=1)a=a*100;return Math.min(100,Math.round(a));};
+    var num=function(v){var n=parseInt(v,10);return isNaN(n)?null:n;};
+    var done={},kids=[],subj=[];
     rows.forEach(function(r){
       var sec=pi>-1?sectionFor(r[pi]):null,c=ci>-1?parseInt(r[ci],10):NaN;if(sec&&c>=0)done[sec.id]=c;
-      var nm=ni>-1?String(r[ni]||"").trim():"",a=ai>-1?parseFloat(String(r[ai]||"").replace("%","")):NaN;
-      if(nm&&!isNaN(a)){if(a>0&&a<=1)a=a*100;kids.push({name:nm,acc:Math.min(100,Math.round(a))});}
+      var nm=ni>-1?String(r[ni]||"").trim():"",a=ai>-1?pct(r[ai]):null,v=vi>-1?num(r[vi]):null;
+      if(nm&&(a!=null||v!=null))kids.push({name:nm,acc:a,n:v});
+      var sn=si>-1?String(r[si]||"").trim():"",sc=sci>-1?num(r[sci]):null;
+      if(sn&&sc!=null)subj.push({name:sn,n:sc,acc:sai>-1?pct(r[sai]):null});
     });
-    st.quillSheet={done:done,kids:kids,date:ymd(new Date())};save();render();if(OV==="quill")renderOv();
+    st.quillSheet={done:done,kids:kids,subj:subj,date:ymd(new Date())};save();render();if(OV==="quill")renderOv();
   }).catch(function(){});
 }
 function loadRules(){
