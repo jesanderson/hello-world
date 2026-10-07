@@ -52,7 +52,12 @@ i{font-style:italic}
 .sb-en{font-size:22px;line-height:1.1;font-weight:800;color:var(--maroon)}
 .sb-b i{font-size:17px;color:var(--slate)}
 .an-row{font-size:30px;font-weight:800;color:var(--maroon);letter-spacing:.08em;line-height:1.2}
-.ql{display:grid;grid-template-columns:1fr 1fr;gap:28px;flex:1;min-height:0}
+.ql{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:22px;flex:1;min-height:0}
+.ql-stack{display:flex;flex-direction:column;gap:22px;min-height:0}.ql-stack .ql-col{flex:1}
+.ql .ql-h{font-size:30px}.ql .ql-p{font-size:30px;padding:3px 0}.ql .ql-k li{font-size:30px;padding:3px 0}.ql .ql-r{width:46px}.ql .ql-pn{width:120px}
+.ql-sub{display:flex;flex-direction:column;gap:6px;overflow:auto}.ql-s{display:grid;grid-template-columns:1fr auto;column-gap:12px;align-items:center;font-size:24px}
+.ql-sn{grid-column:1/-1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ql-s .ql-bar{height:22px;border-radius:4px}.ql-s .ql-bar b{border-radius:0 4px 4px 0}
+.ql-s .ql-n{min-width:120px;font-weight:800}.ql-s .ql-n i{font-weight:400;color:var(--slate);font-style:normal}
 .ql-ed{display:grid;grid-template-columns:1fr 1.4fr;gap:28px;flex:1;min-height:0}
 .ql-col{background:#fff;border-radius:18px;padding:20px 26px;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
 .ql-h{font-size:34px;font-weight:800;color:var(--maroon)}.ql-h i{font-weight:400;color:var(--slate);font-size:26px}
@@ -356,7 +361,7 @@ body.entry #entry{display:block;min-height:100vh}
   <div id="overlay"></div>
 </div>
 <script src="vendor/qrcode.js"></script>
-<script src="data.js?v=20261007a"></script>
-<script src="app.js?v=20261007a"></script>
+<script src="data.js?v=20261007b"></script>
+<script src="app.js?v=20261007b"></script>
 </body>
 </html>
