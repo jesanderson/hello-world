@@ -433,7 +433,8 @@ function tilePreview(id,d){
 }
 // ----- Quill leaderboard (names stay on this device only) -----
 var quillEdit=false;
-function quillData(){var q=st.quill||{};return {done:q.done||{},kids:q.kids||[],date:q.date||""};}
+function quillFromSheet(){var q=st.quillSheet;return !!(q&&(q.kids.length||Object.keys(q.done).length));}
+function quillData(){var q=quillFromSheet()?st.quillSheet:(st.quill||{});return {done:q.done||{},kids:q.kids||[],date:q.date||""};}
 function quillPeriods(){var q=quillData();return SECTIONS.map(function(s){return {s:s,n:+q.done[s.id]||0};}).sort(function(a,b){return b.n-a.n;});}
 function quillTop(){return quillData().kids.slice().sort(function(a,b){return b.acc-a.acc;}).slice(0,10);}
 function quillPreview(){
@@ -724,6 +725,27 @@ function loadBells(){
     if(!out.length)throw 0;st.bellCache=out;save();
   }).catch(function(){});
 }
+// Quill tab: period | completed | (blank) | name | accuracy
+function sectionFor(v){
+  var t=String(v||"").trim().toLowerCase(),n=(t.match(/\d+/)||[""])[0];if(!t)return null;
+  for(var i=0;i<SECTIONS.length;i++){var s=SECTIONS[i];if(s.id===n||s.id.toLowerCase()===t||s.period.toLowerCase()===t||(n&&(s.period.match(/\d+/)||[""])[0]===n))return s;}
+  return null;
+}
+function loadQuill(){
+  var u=sheetUrl();if(!/\/gviz\/tq/.test(u))return;
+  fetch(u+"&sheet=Quill",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
+    if(/^\s*</.test(t))throw 0;
+    var rows=parseCSV(t),head=(rows.shift()||[]).map(function(h){return h.trim().toLowerCase();});
+    var pi=head.indexOf("period"),ci=head.indexOf("completed"),ni=head.indexOf("name"),ai=head.indexOf("accuracy");if(pi<0&&ni<0)throw 0;
+    var done={},kids=[];
+    rows.forEach(function(r){
+      var sec=pi>-1?sectionFor(r[pi]):null,c=ci>-1?parseInt(r[ci],10):NaN;if(sec&&c>=0)done[sec.id]=c;
+      var nm=ni>-1?String(r[ni]||"").trim():"",a=ai>-1?parseFloat(String(r[ai]||"").replace("%","")):NaN;
+      if(nm&&!isNaN(a)){if(a>0&&a<=1)a=a*100;kids.push({name:nm,acc:Math.min(100,Math.round(a))});}
+    });
+    st.quillSheet={done:done,kids:kids,date:ymd(new Date())};save();render();if(OV==="quill")renderOv();
+  }).catch(function(){});
+}
 function loadRules(){
   var u=rulesUrl();if(!u)return;
   fetch(u,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){
@@ -752,6 +774,7 @@ function ovRight(id,d){
     return (s?'<a class="ov-link" href="'+esc(s)+'" target="_blank" rel="noopener">Slides</a>':"")+(p?'<a class="ov-link" href="'+esc(p)+'" target="_blank" rel="noopener">Lesson plan</a>':"");
   }
   if(id==="sounds")return '<button class="ov-link" data-act="sndstop">■ Stop</button>';
+  if(id==="quill"&&quillFromSheet())return '<span class="ov-es">From the Quill tab in your Sheet</span><button class="ov-link" data-act="qreload">↻ Reload</button>';
   if(id==="quill")return quillEdit?'<button class="ov-link" data-act="qsave">Save</button><button class="ov-link" data-act="qedit">Cancel</button>':'<button class="ov-link" data-act="qedit">✎ Update</button>';
   if(id==="video"&&videoUrl(d))return '<a class="ov-link" href="'+esc(videoUrl(d))+'" target="_blank" rel="noopener">Open in YouTube</a>';
   if(id==="seating"&&seatUrl())return '<a class="ov-link" href="'+esc(seatUrl())+'" target="_blank" rel="noopener">Open in new tab</a>';
@@ -840,6 +863,7 @@ function act(a,el,e){
     case "open":openOv(p[1]);return;
     case "qedit":quillEdit=!quillEdit;renderOv();return;
     case "qsave":quillSave();return;
+    case "qreload":loadQuill();return;
     case "cares":st.cares=CARES[(CARES.indexOf(st.cares)+1)%CARES.length];save();render();return;
     case "voice":st.voice=+p[1];save();render();return;
     case "tpreset":tSet(+p[1]*60);return;
@@ -864,7 +888,7 @@ function act(a,el,e){
     case "sndstop":stopSounds();return;
     case "zoom":st.zoom=p[1]==="auto"?1:Math.max(0.5,Math.min(1.5,Math.round(((st.zoom||1)+(p[1]==="in"?0.05:-0.05))*100)/100));save();scaleBoard(true);renderOv();return;
     case "sheetsave":st.sheetUrl=$("#sheetIn").value.trim();save();loadSheet();return;
-    case "sheetreload":loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();return;
+    case "sheetreload":loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();loadQuill();return;
     case "emax":entryMax=entryMax===p[1]?"":p[1];entryKey="";render();return;
     case "epick":entryPick=p[1]||"";entryKey="";render();return;
     case "etog":togglePick(p[1],+p[2]);entryKey="";render();return;
@@ -945,8 +969,8 @@ setInterval(scaleBoard,2000);
 // ---------- start ----------
 if(ENTRY)document.body.classList.add("entry");
 importSeatsFromHash();
-scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();
-setInterval(function(){loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();},5*60*1000);
+scaleBoard(true);render();renderChyron();loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();loadQuill();
+setInterval(function(){loadSheet();loadRules();loadAnnotations();loadEntry();loadBells();loadQuill();},5*60*1000);
 var lastMin=new Date().getMinutes();
 setInterval(function(){
   tickTimers();
